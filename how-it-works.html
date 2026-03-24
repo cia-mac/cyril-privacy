@@ -11,16 +11,57 @@
     background: #0d0d0d;
     color: #e0e0e0;
     font-family: -apple-system, BlinkMacSystemFont, 'SF Pro', 'Helvetica Neue', sans-serif;
-    line-height: 1.6;
+    line-height: 1.7;
     overflow-x: hidden;
   }
+
+  /* ── NAV ── */
+  .nav {
+    position: sticky; top: 0; z-index: 100;
+    background: rgba(13,13,13,0.92);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid #1a1a1a;
+    padding: 10px 0;
+    overflow-x: auto;
+    white-space: nowrap;
+    scrollbar-width: none;
+  }
+  .nav::-webkit-scrollbar { display: none; }
+  .nav-inner {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 0 24px;
+    display: flex;
+    gap: 6px;
+  }
+  .nav a {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 14px;
+    font-size: 0.75em;
+    font-weight: 500;
+    color: #666;
+    text-decoration: none;
+    border: 1px solid transparent;
+    transition: all 0.2s;
+    flex-shrink: 0;
+  }
+  .nav a:hover, .nav a.active {
+    color: #6a9a8a;
+    border-color: #2a3a34;
+    background: rgba(106,154,138,0.08);
+  }
+
+  /* ── LAYOUT ── */
   .container {
     max-width: 960px;
     margin: 0 auto;
-    padding: 60px 24px;
+    padding: 0 24px 60px;
   }
+  section { padding-top: 48px; }
   h1 {
-    font-size: 2.4em;
+    font-size: 2.6em;
     font-weight: 700;
     color: #6a9a8a;
     margin-bottom: 8px;
@@ -28,242 +69,296 @@
   }
   h1 span { color: #e0e0e0; }
   .subtitle {
-    font-size: 1.1em;
-    color: #888;
-    margin-bottom: 48px;
+    font-size: 1.05em;
+    color: #777;
+    margin-bottom: 32px;
   }
   h2 {
     font-size: 1.3em;
     font-weight: 600;
     color: #6a9a8a;
-    margin: 64px 0 16px;
-    opacity: 0;
-    transform: translateY(20px);
-    transition: opacity 0.6s ease, transform 0.6s ease;
+    margin-bottom: 12px;
+    opacity: 0; transform: translateY(16px);
+    transition: opacity 0.5s, transform 0.5s;
   }
-  h2.visible { opacity: 1; transform: translateY(0); }
-  p { color: #bbb; margin-bottom: 16px; font-size: 0.95em; }
+  h2.vis { opacity: 1; transform: none; }
+  p { color: #aaa; margin-bottom: 14px; font-size: 0.92em; }
   .formula {
-    background: #1a1a1a;
-    border: 1px solid #2a2a2a;
-    border-radius: 12px;
-    padding: 20px 24px;
-    margin: 24px 0;
-    font-family: 'SF Mono', 'Menlo', monospace;
-    font-size: 0.95em;
-    color: #6a9a8a;
-  }
-  .formula .label { color: #666; font-size: 0.8em; margin-bottom: 8px; font-family: -apple-system, sans-serif; }
-
-  .viz-panel {
     background: #141414;
     border: 1px solid #222;
-    border-radius: 16px;
-    padding: 32px;
-    margin: 32px 0;
-    opacity: 0;
-    transform: translateY(20px);
-    transition: opacity 0.6s ease, transform 0.6s ease;
+    border-radius: 12px;
+    padding: 20px 24px;
+    margin: 20px 0;
+    font-family: 'SF Mono', 'Menlo', monospace;
+    font-size: 0.92em;
+    color: #6a9a8a;
   }
-  .viz-panel.visible { opacity: 1; transform: translateY(0); }
-  canvas { width: 100%; border-radius: 8px; display: block; }
+  .formula .label {
+    color: #555;
+    font-size: 0.78em;
+    margin-bottom: 6px;
+    font-family: -apple-system, sans-serif;
+  }
 
-  .control-row {
+  .panel {
+    background: #111;
+    border: 1px solid #1e1e1e;
+    border-radius: 14px;
+    padding: 28px;
+    margin: 24px 0;
+    opacity: 0; transform: translateY(16px);
+    transition: opacity 0.5s, transform 0.5s;
+  }
+  .panel.vis { opacity: 1; transform: none; }
+  canvas { width: 100%; display: block; border-radius: 6px; }
+
+  /* ── CONTROLS ── */
+  .ctrl {
     display: flex;
     align-items: center;
-    gap: 16px;
-    margin: 16px 0;
+    gap: 14px;
+    margin: 12px 0;
   }
-  .control-row label {
-    min-width: 120px;
-    font-size: 0.85em;
-    color: #888;
+  .ctrl label {
+    min-width: 110px;
+    font-size: 0.82em;
+    color: #666;
   }
-  .control-row input[type="range"] {
+  .ctrl input[type="range"] {
     flex: 1;
     -webkit-appearance: none;
-    height: 4px;
+    height: 3px;
+    background: #2a2a2a;
+    border-radius: 2px;
+    outline: none;
+  }
+  .ctrl input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 14px; height: 14px;
+    border-radius: 50%;
+    background: #6a9a8a;
+    cursor: pointer;
+    border: 2px solid #0d0d0d;
+  }
+  .ctrl .val {
+    min-width: 40px;
+    text-align: right;
+    font-family: 'SF Mono', monospace;
+    font-size: 0.82em;
+    color: #6a9a8a;
+  }
+  .ctrl select {
+    background: #1a1a1a;
+    color: #bbb;
+    border: 1px solid #2a2a2a;
+    border-radius: 6px;
+    padding: 4px 8px;
+    font-size: 0.82em;
+    outline: none;
+  }
+
+  .btn {
+    border: none;
+    padding: 7px 18px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.82em;
+    transition: opacity 0.15s;
+  }
+  .btn:hover { opacity: 0.85; }
+  .btn-p { background: #6a9a8a; color: #0d0d0d; }
+  .btn-s { background: #222; color: #888; }
+
+  .tag {
+    font-size: 0.7em;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: #444;
+    margin-bottom: 10px;
+  }
+  .note {
+    background: rgba(106,154,138,0.06);
+    border-left: 2px solid #3a5a4e;
+    padding: 14px 18px;
+    margin: 20px 0;
+    border-radius: 0 8px 8px 0;
+    font-size: 0.88em;
+    color: #888;
+  }
+  .note strong { color: #6a9a8a; }
+
+  /* ── HERO ── */
+  .hero-wrap {
+    position: relative;
+    margin: 0 -24px 32px;
+    padding: 48px 24px 32px;
+  }
+  .hero-canvas-wrap {
+    position: relative;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid #1e1e1e;
+  }
+  #heroCanvas { width: 100%; height: 280px; display: block; }
+  .hero-ctrl {
+    position: absolute;
+    bottom: 12px; left: 12px;
+    display: flex; gap: 8px; align-items: center;
+    background: rgba(13,13,13,0.8);
+    backdrop-filter: blur(8px);
+    padding: 6px 14px;
+    border-radius: 8px;
+    font-size: 0.78em;
+  }
+  .hero-ctrl label { color: #666; }
+  .hero-ctrl input[type="range"] {
+    width: 120px;
+    -webkit-appearance: none;
+    height: 3px;
     background: #333;
     border-radius: 2px;
     outline: none;
   }
-  .control-row input[type="range"]::-webkit-slider-thumb {
+  .hero-ctrl input[type="range"]::-webkit-slider-thumb {
     -webkit-appearance: none;
-    width: 16px; height: 16px;
+    width: 12px; height: 12px;
     border-radius: 50%;
     background: #6a9a8a;
     cursor: pointer;
   }
-  .control-row .value {
-    min-width: 48px;
-    text-align: right;
+  .hero-ctrl .val {
     font-family: 'SF Mono', monospace;
-    font-size: 0.85em;
     color: #6a9a8a;
-  }
-  .control-row select {
-    background: #222;
-    color: #ccc;
-    border: 1px solid #333;
-    border-radius: 6px;
-    padding: 4px 8px;
-    font-size: 0.85em;
-    outline: none;
+    min-width: 28px;
+    text-align: right;
   }
 
-  .section-label {
-    font-size: 0.75em;
-    color: #555;
+  /* ── PIPELINE ── */
+  .pipe-flow { display: flex; flex-direction: column; gap: 0; margin: 20px 0; }
+  .pipe-phase {
+    font-size: 0.7em;
     text-transform: uppercase;
-    letter-spacing: 1px;
-    margin-bottom: 12px;
-  }
-
-  .insight {
-    background: rgba(106, 154, 138, 0.08);
-    border-left: 3px solid #6a9a8a;
-    padding: 16px 20px;
-    margin: 24px 0;
-    border-radius: 0 8px 8px 0;
-    font-size: 0.9em;
-    color: #aaa;
-  }
-  .insight strong { color: #6a9a8a; }
-
-  .btn {
-    border: none;
-    padding: 8px 20px;
-    border-radius: 6px;
-    cursor: pointer;
-    font-weight: 600;
-    font-size: 0.85em;
-    transition: opacity 0.2s;
-  }
-  .btn:hover { opacity: 0.85; }
-  .btn-primary { background: #6a9a8a; color: #000; }
-  .btn-secondary { background: #333; color: #aaa; }
-
-  /* Pipeline nodes */
-  .pipeline-flow {
+    letter-spacing: 0.8px;
+    padding: 8px 0 4px;
     display: flex;
-    flex-direction: column;
-    gap: 0;
-    margin: 24px 0;
+    align-items: center;
+    gap: 8px;
   }
+  .pipe-phase::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: #1e1e1e;
+  }
+  .pipe-phase.gpu { color: #5a8a6a; }
+  .pipe-phase.cpu { color: #5a7a9a; }
   .pipe-node {
     display: flex;
     align-items: center;
-    gap: 16px;
-    padding: 14px 20px;
-    background: #1a1a1a;
-    border: 1px solid #2a2a2a;
-    border-radius: 10px;
-    position: relative;
+    gap: 14px;
+    padding: 10px 16px;
+    background: #151515;
+    border: 1px solid #1e1e1e;
+    border-radius: 8px;
     transition: border-color 0.3s, background 0.3s;
   }
-  .pipe-node.active {
+  .pipe-node.on {
     border-color: #6a9a8a;
-    background: rgba(106, 154, 138, 0.08);
+    background: rgba(106,154,138,0.06);
   }
-  .pipe-node .num {
-    width: 28px; height: 28px;
+  .pipe-node .n {
+    width: 24px; height: 24px;
     border-radius: 50%;
-    background: #222;
-    border: 1px solid #333;
+    background: #1a1a1a;
+    border: 1px solid #2a2a2a;
     display: flex;
-    align-items: center;
-    justify-content: center;
+    align-items: center; justify-content: center;
     font-family: 'SF Mono', monospace;
-    font-size: 0.75em;
-    color: #666;
-    flex-shrink: 0;
-    transition: background 0.3s, border-color 0.3s, color 0.3s;
-  }
-  .pipe-node.active .num {
-    background: #6a9a8a;
-    border-color: #6a9a8a;
-    color: #000;
-  }
-  .pipe-node .pipe-label {
-    font-size: 0.9em;
-    color: #aaa;
-    transition: color 0.3s;
-  }
-  .pipe-node.active .pipe-label { color: #e0e0e0; }
-  .pipe-node .pipe-detail {
-    font-size: 0.75em;
+    font-size: 0.7em;
     color: #555;
+    flex-shrink: 0;
+    transition: all 0.3s;
+  }
+  .pipe-node.on .n { background: #6a9a8a; border-color: #6a9a8a; color: #0d0d0d; }
+  .pipe-node .pl { font-size: 0.85em; color: #888; transition: color 0.3s; }
+  .pipe-node.on .pl { color: #ddd; }
+  .pipe-node .pd {
+    font-size: 0.72em; color: #444;
     font-family: 'SF Mono', monospace;
     margin-left: auto;
     transition: color 0.3s;
   }
-  .pipe-node.active .pipe-detail { color: #6a9a8a; }
-  .pipe-arrow {
-    text-align: center;
-    color: #333;
-    font-size: 1.2em;
-    line-height: 1;
-    padding: 2px 0;
-  }
+  .pipe-node.on .pd { color: #6a9a8a; }
+  .pipe-arrow { text-align: center; color: #2a2a2a; font-size: 0.9em; line-height: 1; padding: 1px 0; }
 
-  /* Blend simulator */
-  .blend-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 16px;
-    margin: 16px 0;
-  }
-  .blend-swatch {
-    height: 80px;
-    border-radius: 8px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-family: 'SF Mono', monospace;
-    font-size: 0.8em;
-    color: rgba(255,255,255,0.7);
-    text-shadow: 0 1px 3px rgba(0,0,0,0.5);
-  }
+  /* ── BLEND ── */
+  .blend-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 14px 0; }
   .blend-result {
-    height: 80px;
-    border-radius: 8px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-family: 'SF Mono', monospace;
-    font-size: 0.85em;
+    height: 72px; border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'SF Mono', monospace; font-size: 0.82em;
     color: rgba(255,255,255,0.8);
-    text-shadow: 0 1px 3px rgba(0,0,0,0.5);
-    border: 2px solid #6a9a8a;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.6);
+    border: 1px solid #2a2a2a;
   }
 
   footer {
-    margin-top: 64px;
-    padding-top: 24px;
-    border-top: 1px solid #222;
-    color: #444;
-    font-size: 0.8em;
+    margin-top: 48px;
+    padding-top: 20px;
+    border-top: 1px solid #1a1a1a;
+    color: #333;
+    font-size: 0.78em;
     text-align: center;
   }
 
   @media (max-width: 600px) {
-    .container { padding: 32px 16px; }
-    h1 { font-size: 1.8em; }
-    .viz-panel { padding: 20px 16px; }
-    .control-row label { min-width: 80px; }
+    .container { padding: 0 16px 40px; }
+    h1 { font-size: 1.9em; }
+    .panel { padding: 20px 14px; }
+    .ctrl label { min-width: 80px; }
     .blend-grid { grid-template-columns: 1fr; }
-    .pipe-node .pipe-detail { display: none; }
+    .pipe-node .pd { display: none; }
+    #heroCanvas { height: 200px; }
+    .hero-ctrl input[type="range"] { width: 80px; }
   }
 </style>
 </head>
 <body>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="#top">Intro</a>
+    <a href="#decay">Decay</a>
+    <a href="#contributions">Weight</a>
+    <a href="#trails">Trails</a>
+    <a href="#compare">Compare</a>
+    <a href="#pipeline">Pipeline</a>
+    <a href="#keyframe">Keyframe</a>
+    <a href="#deflicker">Deflicker</a>
+    <a href="#blend">Blend</a>
+  </div>
+</nav>
+
 <div class="container">
 
+<!-- ════════ HERO ════════ -->
+<section id="top">
 <h1>How <span>Cyril</span> Works</h1>
-<p class="subtitle">Temporal accumulation — blending time-lapse sequences into layered motion trails</p>
+<p class="subtitle">Temporal accumulation — blending time-lapse frames into layered motion trails</p>
 
-<h2>The Core Idea</h2>
-<p>Cyril reads a sequence of time-lapse images and blends them using an <strong style="color:#6a9a8a">exponential moving average</strong>. Each new frame mixes into a running composite. Recent frames contribute strongly; older frames decay. The result: long-exposure-like trails where motion accumulates over time.</p>
+<div class="hero-wrap">
+  <div class="hero-canvas-wrap">
+    <canvas id="heroCanvas"></canvas>
+    <div class="hero-ctrl">
+      <label>trail</label>
+      <input type="range" id="heroTrail" min="2" max="120" value="30">
+      <span class="val" id="heroTrailVal">30</span>
+    </div>
+  </div>
+</div>
+
+<p>Cyril reads a sequence of time-lapse images and blends them with an <strong style="color:#6a9a8a">exponential moving average</strong>. Each frame mixes into a running composite — recent frames dominate, older frames decay. The result: long-exposure trails where motion accumulates over time.</p>
 
 <div class="formula">
   <div class="label">EMA update (per frame):</div>
@@ -272,903 +367,656 @@
   <div class="label">Weight from trail length:</div>
   w = 1 - e<sup>ln(0.10) / trail</sup>
   <br><br>
-  <div class="label">After <em>trail</em> frames, a pixel's contribution decays to 10%.</div>
+  <div class="label">After <em>trail</em> frames, contribution decays to 10%.</div>
 </div>
+</section>
 
-<!-- ═══════════════ 1. DECAY CURVE ═══════════════ -->
+<!-- ════════ 1. DECAY ════════ -->
+<section id="decay">
 <h2>1. The Decay Curve</h2>
-<p>How fast does a frame's influence fade? Drag the trail length.</p>
-
-<div class="viz-panel">
-  <div class="control-row">
+<p>How fast does a frame fade? Drag the trail length.</p>
+<div class="panel">
+  <div class="ctrl">
     <label>Trail Length</label>
     <input type="range" id="trailSlider" min="2" max="200" value="20">
-    <span class="value" id="trailValue">20</span>
+    <span class="val" id="trailValue">20</span>
   </div>
-  <canvas id="decayCanvas" height="240"></canvas>
-  <div class="insight" id="decayInsight"></div>
+  <canvas id="decayCanvas" height="220"></canvas>
+  <div class="note" id="decayNote"></div>
 </div>
+</section>
 
-<!-- ═══════════════ 2. FRAME WATERFALL ═══════════════ -->
+<!-- ════════ 2. CONTRIBUTIONS ════════ -->
+<section id="contributions">
 <h2>2. Frame Contributions</h2>
-<p>Each frame's weight in the composite, visualized as a signal cascade. The newest frame enters at full weight; each prior frame's contribution has been exponentially reduced by the EMA update.</p>
-
-<div class="viz-panel">
-  <div class="control-row">
+<p>Each frame's weight in the composite. The newest frame enters at full weight; each prior frame has been exponentially reduced.</p>
+<div class="panel">
+  <div class="ctrl">
     <label>Trail Length</label>
-    <input type="range" id="stackTrail" min="2" max="80" value="12">
-    <span class="value" id="stackTrailValue">12</span>
+    <input type="range" id="wfTrail" min="2" max="80" value="12">
+    <span class="val" id="wfTrailVal">12</span>
   </div>
-  <canvas id="waterfallCanvas" height="320"></canvas>
+  <div class="note" id="wfNote" style="margin-bottom:16px"></div>
+  <canvas id="wfCanvas" height="300"></canvas>
 </div>
+</section>
 
-<!-- ═══════════════ 3. ACCUMULATION SIM ═══════════════ -->
-<h2>3. Accumulation in Motion</h2>
-<p>Watch the composite evolve frame by frame. The canvas simulates a moving colored signal being blended via EMA. The bottom strip shows the composite's current color breakdown.</p>
-
-<div class="viz-panel">
-  <div class="control-row">
+<!-- ════════ 3. TRAILS ════════ -->
+<section id="trails">
+<h2>3. Accumulation in Action</h2>
+<p>A colored dot traces a path. Each frame, the canvas blends via EMA — exactly how Cyril processes pixels. Increase the trail to see longer persistence; decrease it for sharper, shorter trails.</p>
+<div class="panel">
+  <div class="ctrl">
     <label>Trail Length</label>
-    <input type="range" id="simTrail" min="2" max="40" value="8">
-    <span class="value" id="simTrailValue">8</span>
+    <input type="range" id="trailDemo" min="2" max="120" value="25">
+    <span class="val" id="trailDemoVal">25</span>
   </div>
-  <div class="control-row">
-    <label>Frame</label>
-    <input type="range" id="simFrame" min="0" max="59" value="0">
-    <span class="value" id="simFrameValue">0 / 60</span>
-  </div>
-  <div style="display:flex;gap:12px;margin:8px 0 16px;">
-    <button class="btn btn-primary" id="simPlay">&#9654; Play</button>
-    <button class="btn btn-secondary" id="simReset">Reset</button>
-  </div>
-  <canvas id="simCanvas" height="280"></canvas>
+  <canvas id="trailCanvas" height="300"></canvas>
+  <div class="note">Each pixel: <strong>composite = composite × (1-w) + frame × w</strong>. Where the dot was, it decays. Where it is, it brightens. The trail length controls how fast the past fades.</div>
 </div>
+</section>
 
-<!-- ═══════════════ 4. SHORT vs LONG ═══════════════ -->
+<!-- ════════ 4. COMPARE ════════ -->
+<section id="compare">
 <h2>4. Short vs Long Trail</h2>
-<p>Short trails respond to recent motion. Long trails accumulate deep history. The playhead sweeps through — watch how the composition differs.</p>
-
-<div class="viz-panel">
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;">
+<p>Same motion, different persistence. Short trails track the dot closely. Long trails smear its history across the canvas.</p>
+<div class="panel">
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
     <div>
-      <div class="section-label">Trail = 5 — responsive</div>
-      <canvas id="compareShort" height="200"></canvas>
+      <div class="tag">Trail = 5 — responsive</div>
+      <canvas id="cmpShort" height="220"></canvas>
     </div>
     <div>
-      <div class="section-label">Trail = 80 — deep memory</div>
-      <canvas id="compareLong" height="200"></canvas>
+      <div class="tag">Trail = 80 — deep memory</div>
+      <canvas id="cmpLong" height="220"></canvas>
     </div>
-  </div>
-  <div style="text-align:center;margin-top:16px;">
-    <button class="btn btn-primary" id="comparePlay">&#9654; Animate</button>
   </div>
 </div>
+</section>
 
-<!-- ═══════════════ 5. PIPELINE ═══════════════ -->
+<!-- ════════ 5. PIPELINE ════════ -->
+<section id="pipeline">
 <h2>5. The Processing Pipeline</h2>
-<p>Every frame passes through this chain. All pixel math runs in Float32 linear sRGB — no gamma artifacts during blending. The sRGB conversion happens only at the final output via a 4096-entry lookup table.</p>
-
-<div class="viz-panel" id="pipelinePanel">
-  <div class="pipeline-flow" id="pipelineFlow"></div>
-  <div class="insight">
-    All vector operations use Apple's <strong>vDSP/Accelerate</strong> framework for SIMD-optimized batch processing. Color corrections run on GPU via <strong>CIFilter</strong>. The entire pipeline avoids 8-bit bottlenecks.
+<p>Every frame passes through this chain. All math runs in Float32 linear sRGB — no gamma artifacts. The sRGB conversion happens only at output via a 4096-entry LUT.</p>
+<div class="panel" id="pipePanel">
+  <div class="pipe-flow" id="pipeFlow"></div>
+  <div class="note">
+    Color corrections run on <strong>GPU via CIFilter</strong>. Accumulation and corrections use <strong>vDSP/Accelerate</strong> for SIMD-optimized batch ops. No 8-bit bottleneck anywhere in the chain.
   </div>
 </div>
+</section>
 
-<!-- ═══════════════ 6. KEYFRAME TRAIL ═══════════════ -->
+<!-- ════════ 6. KEYFRAME ════════ -->
+<section id="keyframe">
 <h2>6. Keyframed Trail</h2>
-<p>In v1.1, trail length can change over the sequence via keyframes with easing. Set short trails for crisp sections, long trails for ghostly passages, and let the easing curve handle the transition.</p>
-
-<div class="viz-panel">
-  <div class="control-row">
+<p>Trail length can change over the sequence via keyframes with easing. Short trails for crisp sections, long trails for ghostly passages.</p>
+<div class="panel">
+  <div class="ctrl">
     <label>Start Trail</label>
     <input type="range" id="kfStart" min="2" max="200" value="5">
-    <span class="value" id="kfStartVal">5</span>
+    <span class="val" id="kfStartVal">5</span>
   </div>
-  <div class="control-row">
+  <div class="ctrl">
     <label>End Trail</label>
     <input type="range" id="kfEnd" min="2" max="200" value="120">
-    <span class="value" id="kfEndVal">120</span>
+    <span class="val" id="kfEndVal">120</span>
   </div>
-  <div class="control-row">
+  <div class="ctrl">
     <label>Easing</label>
     <select id="kfEasing">
       <option value="linear">Linear</option>
       <option value="easeIn">Ease In (t²)</option>
-      <option value="easeOut" selected>Ease Out (1-(1-t)²)</option>
+      <option value="easeOut" selected>Ease Out</option>
       <option value="easeInOut">Ease In-Out</option>
     </select>
   </div>
-  <canvas id="kfCanvas" height="280"></canvas>
-  <div class="insight" id="kfInsight"></div>
+  <canvas id="kfCanvas" height="260"></canvas>
+  <div class="note" id="kfNote"></div>
 </div>
+</section>
 
-<!-- ═══════════════ 7. DEFLICKER ═══════════════ -->
+<!-- ════════ 7. DEFLICKER ════════ -->
+<section id="deflicker">
 <h2>7. Deflicker</h2>
-<p>Time-lapses often have per-frame brightness jitter from aperture/shutter inconsistency. Cyril measures each frame's luminance (Rec.709, trimmed mean of 10th-90th percentile), then Gaussian-smooths the luminance curve and applies corrections. Corrections are soft-clamped to ±2 stops via log-space tanh compression.</p>
-
-<div class="viz-panel">
-  <div class="control-row">
+<p>Time-lapses have per-frame brightness jitter. Cyril measures luminance (Rec.709, trimmed mean 10th-90th percentile), Gaussian-smooths the curve, and applies corrections soft-clamped to ±2 stops via log-space tanh.</p>
+<div class="panel">
+  <div class="ctrl">
     <label>Flicker Amount</label>
-    <input type="range" id="flickerAmt" min="0" max="100" value="40">
-    <span class="value" id="flickerAmtVal">40%</span>
+    <input type="range" id="fAmt" min="0" max="100" value="50">
+    <span class="val" id="fAmtVal">50%</span>
   </div>
-  <div class="control-row">
+  <div class="ctrl">
     <label>Smoothing Radius</label>
-    <input type="range" id="flickerRadius" min="3" max="40" value="12">
-    <span class="value" id="flickerRadiusVal">12</span>
+    <input type="range" id="fRad" min="3" max="40" value="12">
+    <span class="val" id="fRadVal">12</span>
   </div>
-  <canvas id="flickerCanvas" height="260"></canvas>
+  <div class="tag" style="margin-top:16px">Luminance curve</div>
+  <canvas id="fCanvas" height="220"></canvas>
+  <div class="tag" style="margin-top:20px">Frame brightness — before & after</div>
+  <canvas id="fStrip" height="80"></canvas>
 </div>
+</section>
 
-<!-- ═══════════════ 8. INTERACTIVE BLEND ═══════════════ -->
+<!-- ════════ 8. BLEND ════════ -->
+<section id="blend">
 <h2>8. Interactive Blend</h2>
-<p>Pick three colors. Watch them accumulate through the EMA as if they were consecutive frames repeated in a loop.</p>
-
-<div class="viz-panel">
-  <div class="control-row">
+<p>Three colors cycle through EMA in linear sRGB — the same colorspace Cyril uses. Watch the composite converge.</p>
+<div class="panel">
+  <div class="ctrl">
     <label>Trail Length</label>
-    <input type="range" id="blendTrail" min="2" max="60" value="10">
-    <span class="value" id="blendTrailVal">10</span>
+    <input type="range" id="blTrail" min="2" max="60" value="10">
+    <span class="val" id="blTrailVal">10</span>
   </div>
   <div class="blend-grid">
     <div>
-      <div class="section-label">Input Colors</div>
+      <div class="tag">Input Colors</div>
       <div style="display:flex;gap:8px;">
-        <input type="color" id="blendColor1" value="#ff4444" style="width:48px;height:36px;border:none;border-radius:6px;cursor:pointer;">
-        <input type="color" id="blendColor2" value="#4488ff" style="width:48px;height:36px;border:none;border-radius:6px;cursor:pointer;">
-        <input type="color" id="blendColor3" value="#44dd66" style="width:48px;height:36px;border:none;border-radius:6px;cursor:pointer;">
+        <input type="color" id="c1" value="#ff4444" style="width:44px;height:32px;border:none;border-radius:6px;cursor:pointer;">
+        <input type="color" id="c2" value="#4488ff" style="width:44px;height:32px;border:none;border-radius:6px;cursor:pointer;">
+        <input type="color" id="c3" value="#44dd66" style="width:44px;height:32px;border:none;border-radius:6px;cursor:pointer;">
       </div>
     </div>
     <div>
-      <div class="section-label">EMA Composite</div>
-      <div class="blend-result" id="blendResult">—</div>
+      <div class="tag">EMA Result</div>
+      <div class="blend-result" id="blResult">—</div>
     </div>
   </div>
-  <canvas id="blendCanvas" height="200"></canvas>
+  <canvas id="blCanvas" height="180"></canvas>
+  <div class="tag" style="margin-top:16px">R / G / B channel convergence</div>
+  <canvas id="blChannels" height="140"></canvas>
 </div>
+</section>
 
-<footer>
-  Cyril — Temporal Accumulation for macOS<br>
-  Built by Ciamac Parhizi
-</footer>
-
+<footer>Cyril — Temporal Accumulation for macOS · Built by Ciamac Parhizi</footer>
 </div>
 
 <script>
-// ═══════════════ CORE MATH ═══════════════
-function weight(trail) {
-  const t = Math.max(2, trail);
-  return 1.0 - Math.exp(Math.log(0.10) / t);
-}
-
-function applyEasing(t, type) {
-  switch (type) {
-    case 'easeIn': return t * t;
-    case 'easeOut': return 1 - (1 - t) * (1 - t);
-    case 'easeInOut': return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+// ══════════════════ MATH ══════════════════
+function W(trail) { return 1 - Math.exp(Math.log(0.1) / Math.max(2, trail)); }
+function ease(t, type) {
+  switch(type) {
+    case 'easeIn': return t*t;
+    case 'easeOut': return 1-(1-t)*(1-t);
+    case 'easeInOut': return t<.5 ? 2*t*t : 1-(-2*t+2)**2/2;
     default: return t;
   }
 }
+function hsl2rgb(h,s,l) {
+  const a=s*Math.min(l,1-l);
+  const f=n=>{const k=(n+h/30)%12;return l-a*Math.max(-1,Math.min(k-3,9-k,1));};
+  return [f(0),f(8),f(4)];
+}
+function hex2rgb(h){return [parseInt(h.slice(1,3),16)/255,parseInt(h.slice(3,5),16)/255,parseInt(h.slice(5,7),16)/255];}
+function lin(c){return c<=.04045?c/12.92:((c+.055)/1.055)**2.4;}
+function srgb(c){return c<=.0031308?c*12.92:1.055*c**(1/2.4)-.055;}
 
-// ═══════════════ COLORS ═══════════════
-const palette = [
-  '#6a9a8a','#d4956b','#7b8ec9','#c97b8e','#8ec97b',
-  '#c9b87b','#7bc9c0','#9a7bc9','#c97b7b','#7bc98e',
-  '#8ab4a6','#d4a87b','#8b9ed9','#d98bae','#9ed98b',
-  '#d9c88b','#8bd9d0','#aa8bd9','#d98b8b','#8bd99e',
-  '#5a8a7a','#c4855b','#6b7eb9','#b96b7e','#7eb96b',
-  '#b9a86b','#6bb9b0','#8a6bb9','#b96b6b','#6bb97e',
-  '#4e7e6e','#b4754b','#5b6ea9','#a95b6e','#6ea95b',
-  '#a9985b','#5ba9a0','#7a5ba9','#a95b5b','#5ba96e'
-];
-function frameColor(i) { return palette[i % palette.length]; }
-
-// ═══════════════ INTERSECTION OBSERVER ═══════════════
-const observer = new IntersectionObserver((entries) => {
-  entries.forEach(e => {
-    if (e.isIntersecting) e.target.classList.add('visible');
-  });
-}, { threshold: 0.1 });
-
-document.querySelectorAll('h2, .viz-panel').forEach(el => observer.observe(el));
-
-// ═══════════════ UTILITY ═══════════════
-function setupCanvas(canvas, height) {
-  const dpr = window.devicePixelRatio || 1;
-  const rect = canvas.getBoundingClientRect();
-  canvas.width = rect.width * dpr;
-  canvas.height = height * dpr;
-  const ctx = canvas.getContext('2d');
-  ctx.scale(dpr, dpr);
-  return { ctx, W: rect.width, H: height };
+// ══════════════════ CANVAS UTIL ══════════════════
+function setup(cv, h) {
+  const d=devicePixelRatio||1, r=cv.getBoundingClientRect();
+  cv.width=r.width*d; cv.height=h*d;
+  const c=cv.getContext('2d'); c.scale(d,d);
+  return {c,w:r.width,h};
 }
 
-// ═══════════════ 1. DECAY CURVE ═══════════════
-const trailSlider = document.getElementById('trailSlider');
-const trailValue = document.getElementById('trailValue');
-const decayInsight = document.getElementById('decayInsight');
+// ══════════════════ OBSERVER ══════════════════
+const vis = new IntersectionObserver(es => es.forEach(e => {
+  if(e.isIntersecting) e.target.classList.add('vis');
+}), {threshold:.08});
+document.querySelectorAll('h2,.panel').forEach(e=>vis.observe(e));
 
-function drawDecay() {
-  const { ctx, W, H } = setupCanvas(document.getElementById('decayCanvas'), 240);
-  const trail = parseInt(trailSlider.value);
-  const w = weight(trail);
-  trailValue.textContent = trail;
+// Active nav tracking
+const navLinks = document.querySelectorAll('.nav a');
+const sections = document.querySelectorAll('section[id]');
+const navObs = new IntersectionObserver(es => {
+  es.forEach(e => {
+    if(e.isIntersecting) {
+      navLinks.forEach(a => a.classList.toggle('active', a.getAttribute('href') === '#'+e.target.id));
+    }
+  });
+}, {rootMargin: '-40% 0px -55% 0px'});
+sections.forEach(s => navObs.observe(s));
 
-  const pad = { l: 50, r: 20, t: 20, b: 40 };
-  const gW = W - pad.l - pad.r, gH = H - pad.t - pad.b;
+// Visibility-gated animation
+const animating = {};
+function gateAnim(id, el, startFn, stopFn) {
+  const obs = new IntersectionObserver(es => {
+    es.forEach(e => {
+      if(e.isIntersecting && !animating[id]) { animating[id]=true; startFn(); }
+      else if(!e.isIntersecting && animating[id]) { animating[id]=false; stopFn(); }
+    });
+  }, {threshold:.1});
+  obs.observe(el);
+}
 
-  // Grid
-  ctx.strokeStyle = '#222'; ctx.lineWidth = 1;
-  for (let i = 0; i <= 10; i++) {
-    const y = pad.t + gH * (1 - i / 10);
-    ctx.beginPath(); ctx.moveTo(pad.l, y); ctx.lineTo(pad.l + gW, y); ctx.stroke();
+// ══════════════════ TRAIL RENDERER (shared) ══════════════════
+// Uses offscreen canvas for correct EMA: composite = composite*(1-w) + frame*w
+function createTrailRenderer(canvas, heightPx) {
+  let ctx, cw, ch, offscreen, offCtx;
+  function init() {
+    const d=devicePixelRatio||1, r=canvas.getBoundingClientRect();
+    cw=r.width; ch=canvas.height ? heightPx : r.height;
+    canvas.width=cw*d; canvas.height=ch*d;
+    ctx=canvas.getContext('2d'); ctx.scale(d,d);
+    ctx.fillStyle='#0d0d0d'; ctx.fillRect(0,0,cw,ch);
+    offscreen=document.createElement('canvas');
+    offscreen.width=cw*d; offscreen.height=ch*d;
+    offCtx=offscreen.getContext('2d'); offCtx.scale(d,d);
   }
-
-  // Axes
-  ctx.fillStyle = '#555'; ctx.font = '11px SF Mono, monospace'; ctx.textAlign = 'right';
-  for (let i = 0; i <= 10; i += 2) {
-    ctx.fillText((i * 10) + '%', pad.l - 8, pad.t + gH * (1 - i / 10) + 4);
+  function tick(w, drawFn) {
+    // Draw current frame on offscreen
+    offCtx.fillStyle='#0d0d0d';
+    offCtx.fillRect(0,0,cw,ch);
+    drawFn(offCtx, cw, ch);
+    // EMA blend: composite = composite*(1-w) + frame*w
+    ctx.globalAlpha=w;
+    ctx.drawImage(offscreen,0,0);
+    ctx.globalAlpha=1;
   }
-  const maxFrames = Math.min(trail * 4, 200);
-  ctx.textAlign = 'center';
-  for (let i = 0; i <= maxFrames; i += Math.max(1, Math.floor(maxFrames / 8))) {
-    ctx.fillText(i, pad.l + (i / maxFrames) * gW, H - 8);
-  }
-  ctx.fillText('frames ago', pad.l + gW / 2, H);
+  init();
+  return { init, tick, getSize:()=>({w:cw,h:ch}) };
+}
 
-  // Filled area
+function drawDot(ctx, x, y, hue, radius) {
+  const [r,g,b]=hsl2rgb(hue,.8,.6);
+  const grad=ctx.createRadialGradient(x,y,0,x,y,radius);
+  grad.addColorStop(0,`rgb(${r*255|0},${g*255|0},${b*255|0})`);
+  grad.addColorStop(.6,`rgba(${r*255|0},${g*255|0},${b*255|0},.3)`);
+  grad.addColorStop(1,'rgba(0,0,0,0)');
+  ctx.fillStyle=grad;
+  ctx.beginPath(); ctx.arc(x,y,radius,0,Math.PI*2); ctx.fill();
+}
+
+// ══════════════════ HERO ══════════════════
+const heroCanvas = document.getElementById('heroCanvas');
+const heroTrail = document.getElementById('heroTrail');
+const heroTrailVal = document.getElementById('heroTrailVal');
+let heroR, heroT=0, heroRaf;
+
+function initHero() { heroR = createTrailRenderer(heroCanvas, heroCanvas.getBoundingClientRect().height); }
+
+function tickHero() {
+  if(!animating.hero) return;
+  heroTrailVal.textContent = heroTrail.value;
+  const w = W(parseInt(heroTrail.value));
+  const t = heroT * 0.012;
+  heroT++;
+  const {w:cw,h:ch} = heroR.getSize();
+  heroR.tick(w, (ctx, cw, ch) => {
+    const cx=cw/2, cy=ch/2;
+    drawDot(ctx, cx+cw*.35*Math.sin(3*t), cy+ch*.35*Math.sin(2*t), (t*40)%360, 22);
+    drawDot(ctx, cx+cw*.3*Math.sin(2*t+1), cy+ch*.3*Math.cos(3*t+.5), (t*40+180)%360, 22);
+  });
+  heroRaf = requestAnimationFrame(tickHero);
+}
+
+initHero();
+gateAnim('hero', heroCanvas, () => { heroRaf=requestAnimationFrame(tickHero); }, () => cancelAnimationFrame(heroRaf));
+heroTrail.addEventListener('input', () => { heroTrailVal.textContent=heroTrail.value; });
+window.addEventListener('resize', initHero);
+
+// ══════════════════ 1. DECAY ══════════════════
+const trailSlider=document.getElementById('trailSlider');
+const trailValue=document.getElementById('trailValue');
+const decayNote=document.getElementById('decayNote');
+
+function drawDecay(){
+  const{c:ctx,w:cW,h:H}=setup(document.getElementById('decayCanvas'),220);
+  const trail=+trailSlider.value, w=W(trail);
+  trailValue.textContent=trail;
+  const p={l:48,r:16,t:16,b:36}, gW=cW-p.l-p.r, gH=H-p.t-p.b;
+
+  ctx.strokeStyle='#1a1a1a'; ctx.lineWidth=1;
+  for(let i=0;i<=10;i++){const y=p.t+gH*(1-i/10);ctx.beginPath();ctx.moveTo(p.l,y);ctx.lineTo(p.l+gW,y);ctx.stroke();}
+
+  ctx.fillStyle='#444';ctx.font='10px SF Mono,monospace';ctx.textAlign='right';
+  for(let i=0;i<=10;i+=2) ctx.fillText(i*10+'%',p.l-6,p.t+gH*(1-i/10)+3);
+
+  const mx=Math.min(trail*4,200);
+  ctx.textAlign='center';
+  for(let i=0;i<=mx;i+=Math.max(1,mx/8|0)) ctx.fillText(i,p.l+(i/mx)*gW,H-8);
+  ctx.fillText('frames ago',p.l+gW/2,H);
+
+  // Fill
   ctx.beginPath();
-  for (let i = 0; i <= maxFrames; i++) {
-    const c = Math.pow(1 - w, i) * w;
-    const x = pad.l + (i / maxFrames) * gW;
-    const y = pad.t + gH * (1 - c / w);
-    if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
-  }
-  ctx.lineTo(pad.l + gW, pad.t + gH);
-  ctx.lineTo(pad.l, pad.t + gH);
-  ctx.closePath();
-  ctx.fillStyle = 'rgba(106, 154, 138, 0.12)';
-  ctx.fill();
+  for(let i=0;i<=mx;i++){const c=((1-w)**i)*w,x=p.l+(i/mx)*gW,y=p.t+gH*(1-c/w);i?ctx.lineTo(x,y):ctx.moveTo(x,y);}
+  ctx.lineTo(p.l+gW,p.t+gH);ctx.lineTo(p.l,p.t+gH);ctx.closePath();
+  ctx.fillStyle='rgba(106,154,138,.1)';ctx.fill();
 
   // Curve
-  ctx.beginPath(); ctx.strokeStyle = '#6a9a8a'; ctx.lineWidth = 2.5;
-  for (let i = 0; i <= maxFrames; i++) {
-    const c = Math.pow(1 - w, i) * w;
-    const x = pad.l + (i / maxFrames) * gW;
-    const y = pad.t + gH * (1 - c / w);
-    if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
-  }
+  ctx.beginPath();ctx.strokeStyle='#6a9a8a';ctx.lineWidth=2;
+  for(let i=0;i<=mx;i++){const c=((1-w)**i)*w,x=p.l+(i/mx)*gW,y=p.t+gH*(1-c/w);i?ctx.lineTo(x,y):ctx.moveTo(x,y);}
   ctx.stroke();
 
-  // 10% threshold
-  const tenY = pad.t + gH * 0.9;
-  ctx.strokeStyle = 'rgba(255,100,100,0.3)'; ctx.lineWidth = 1;
-  ctx.setLineDash([4, 4]);
-  ctx.beginPath(); ctx.moveTo(pad.l, tenY); ctx.lineTo(pad.l + gW, tenY); ctx.stroke();
-  ctx.setLineDash([]);
-  ctx.fillStyle = '#844'; ctx.textAlign = 'left';
-  ctx.fillText('10% threshold', pad.l + 4, tenY - 6);
+  // 10% line
+  ctx.strokeStyle='rgba(200,80,80,.25)';ctx.lineWidth=1;ctx.setLineDash([4,4]);
+  ctx.beginPath();ctx.moveTo(p.l,p.t+gH*.9);ctx.lineTo(p.l+gW,p.t+gH*.9);ctx.stroke();ctx.setLineDash([]);
+  ctx.fillStyle='#644';ctx.textAlign='left';ctx.fillText('10%',p.l+3,p.t+gH*.9-5);
 
   // Trail marker
-  const trailX = pad.l + (trail / maxFrames) * gW;
-  ctx.strokeStyle = 'rgba(255,200,100,0.4)';
-  ctx.setLineDash([4, 4]);
-  ctx.beginPath(); ctx.moveTo(trailX, pad.t); ctx.lineTo(trailX, pad.t + gH); ctx.stroke();
-  ctx.setLineDash([]);
-  ctx.fillStyle = '#a84'; ctx.textAlign = 'center';
-  ctx.fillText('trail=' + trail, trailX, pad.t - 4);
+  const tx=p.l+(trail/mx)*gW;
+  ctx.strokeStyle='rgba(200,170,80,.3)';ctx.setLineDash([4,4]);
+  ctx.beginPath();ctx.moveTo(tx,p.t);ctx.lineTo(tx,p.t+gH);ctx.stroke();ctx.setLineDash([]);
+  ctx.fillStyle='#a84';ctx.textAlign='center';ctx.fillText('trail='+trail,tx,p.t-3);
 
-  const wPct = (w * 100).toFixed(1);
-  decayInsight.innerHTML = `At trail <strong>${trail}</strong>, frame weight is <strong>${wPct}%</strong>. Decays to 10% after ${trail} frames, to 1% after ~${Math.ceil(trail * 2)}.`;
+  decayNote.innerHTML=`At trail <strong>${trail}</strong>, weight = <strong>${(w*100).toFixed(1)}%</strong>. Decays to 10% after ${trail} frames, 1% after ~${trail*2}.`;
+}
+trailSlider.addEventListener('input',drawDecay);drawDecay();
+
+// ══════════════════ 2. WATERFALL ══════════════════
+const wfTrail=document.getElementById('wfTrail');
+const wfTrailVal=document.getElementById('wfTrailVal');
+const wfNote=document.getElementById('wfNote');
+const palette=['#6a9a8a','#d4956b','#7b8ec9','#c97b8e','#8ec97b','#c9b87b','#7bc9c0','#9a7bc9','#c97b7b','#7bc98e',
+  '#8ab4a6','#d4a87b','#8b9ed9','#d98bae','#9ed98b','#d9c88b','#8bd9d0','#aa8bd9','#d98b8b','#8bd99e',
+  '#5a8a7a','#c4855b','#6b7eb9','#b96b7e','#7eb96b','#b9a86b','#6bb9b0','#8a6bb9','#b96b6b','#6bb97e',
+  '#4e7e6e','#b4754b','#5b6ea9','#a95b6e','#6ea95b','#a9985b','#5ba9a0','#7a5ba9','#a95b5b','#5ba96e'];
+function fCol(i){return palette[i%palette.length];}
+
+function drawWf(){
+  const{c:ctx,w:cW,h:H}=setup(document.getElementById('wfCanvas'),300);
+  const trail=+wfTrail.value, w=W(trail);
+  wfTrailVal.textContent=trail;
+  const p={l:50,r:16,t:12,b:24}, gW=cW-p.l-p.r, gH=H-p.t-p.b;
+  const n=Math.min(Math.max(trail*2,8),40);
+  const cs=[];let sum=0;
+  for(let i=0;i<n;i++){const c=((1-w)**i)*w;cs.push(c);sum+=c;}
+  const mx=cs[0];
+  const bH=Math.min(gH/n-1.5,18), gap=(gH-bH*n)/Math.max(n-1,1);
+
+  for(let i=0;i<n;i++){
+    const y=p.t+i*(bH+gap), bW=(cs[i]/mx)*gW;
+    ctx.shadowColor=fCol(i);ctx.shadowBlur=cs[i]/mx>.3?6:0;
+    ctx.fillStyle=fCol(i);ctx.globalAlpha=.3+.7*(cs[i]/mx);
+    ctx.beginPath();ctx.roundRect(p.l,y,bW,bH,2);ctx.fill();
+    ctx.shadowBlur=0;ctx.globalAlpha=1;
+    ctx.fillStyle='#444';ctx.font='9px SF Mono,monospace';ctx.textAlign='right';
+    ctx.fillText('-'+i,p.l-6,y+bH/2+3);
+    if(bW>36){ctx.fillStyle='rgba(255,255,255,.6)';ctx.textAlign='left';ctx.fillText((cs[i]*100).toFixed(1)+'%',p.l+bW+5,y+bH/2+3);}
+  }
+  wfNote.innerHTML=`Top <strong>${n}</strong> frames account for <strong>${(sum*100).toFixed(1)}%</strong> of the composite.`;
+}
+wfTrail.addEventListener('input',drawWf);drawWf();
+
+// ══════════════════ 3. TRAIL DEMO ══════════════════
+const trailDemo=document.getElementById('trailDemo');
+const trailDemoVal=document.getElementById('trailDemoVal');
+const trailCanvas=document.getElementById('trailCanvas');
+let trailR, tT=0, tRaf;
+
+function initTrail(){ trailR=createTrailRenderer(trailCanvas,300); }
+
+function tickTrail(){
+  if(!animating.trail) return;
+  trailDemoVal.textContent=trailDemo.value;
+  const w=W(+trailDemo.value), t=tT*.015;
+  tT++;
+  trailR.tick(w, (ctx,cw,ch) => {
+    drawDot(ctx, cw/2+cw*.32*Math.sin(3*t), ch/2+ch*.35*Math.sin(2*t), (t*35)%360, 18);
+  });
+  tRaf=requestAnimationFrame(tickTrail);
+}
+initTrail();
+gateAnim('trail',trailCanvas,()=>{tRaf=requestAnimationFrame(tickTrail);},()=>cancelAnimationFrame(tRaf));
+trailDemo.addEventListener('input',()=>{trailDemoVal.textContent=trailDemo.value;});
+window.addEventListener('resize',initTrail);
+
+// ══════════════════ 4. COMPARE ══════════════════
+const cmpShort=document.getElementById('cmpShort');
+const cmpLong=document.getElementById('cmpLong');
+let cmpR5, cmpR80, cT=0, cRaf;
+
+function initCmp(){
+  cmpR5=createTrailRenderer(cmpShort,220);
+  cmpR80=createTrailRenderer(cmpLong,220);
 }
 
-trailSlider.addEventListener('input', drawDecay);
-drawDecay();
-
-// ═══════════════ 2. WATERFALL ═══════════════
-const stackTrail = document.getElementById('stackTrail');
-const stackTrailValue = document.getElementById('stackTrailValue');
-
-function drawWaterfall() {
-  const { ctx, W, H } = setupCanvas(document.getElementById('waterfallCanvas'), 320);
-  const trail = parseInt(stackTrail.value);
-  const w = weight(trail);
-  stackTrailValue.textContent = trail;
-
-  const pad = { l: 60, r: 20, t: 20, b: 30 };
-  const gW = W - pad.l - pad.r, gH = H - pad.t - pad.b;
-  const numBars = Math.min(Math.max(trail * 2, 10), 40);
-
-  // Compute contributions
-  const contribs = [];
-  for (let i = 0; i < numBars; i++) contribs.push(Math.pow(1 - w, i) * w);
-
-  const maxC = contribs[0];
-
-  // Draw horizontal bars (newest at top)
-  const barH = Math.min(gH / numBars - 2, 20);
-  const gap = (gH - barH * numBars) / Math.max(numBars - 1, 1);
-
-  for (let i = 0; i < numBars; i++) {
-    const y = pad.t + i * (barH + gap);
-    const barW = (contribs[i] / maxC) * gW;
-
-    // Bar with glow
-    ctx.shadowColor = frameColor(i);
-    ctx.shadowBlur = contribs[i] / maxC > 0.3 ? 8 : 0;
-    ctx.fillStyle = frameColor(i);
-    ctx.globalAlpha = 0.3 + 0.7 * (contribs[i] / maxC);
-    ctx.beginPath();
-    ctx.roundRect(pad.l, y, barW, barH, 3);
-    ctx.fill();
-    ctx.shadowBlur = 0;
-    ctx.globalAlpha = 1;
-
-    // Label
-    ctx.fillStyle = '#555';
-    ctx.font = '10px SF Mono, monospace';
-    ctx.textAlign = 'right';
-    ctx.fillText(`-${i}`, pad.l - 8, y + barH / 2 + 3);
-
-    // Percentage
-    if (barW > 40) {
-      ctx.fillStyle = 'rgba(255,255,255,0.7)';
-      ctx.textAlign = 'left';
-      ctx.fillText((contribs[i] * 100).toFixed(1) + '%', pad.l + barW + 6, y + barH / 2 + 3);
-    }
-  }
-
-  // Axis label
-  ctx.fillStyle = '#444'; ctx.font = '10px -apple-system, sans-serif';
-  ctx.textAlign = 'center';
-  ctx.fillText('frame age (newest → oldest)', pad.l - 30, H - 4);
+function tickCmp(){
+  if(!animating.cmp) return;
+  cT++;
+  const t=cT*.015;
+  [[cmpR5,5],[cmpR80,80]].forEach(([renderer,trail])=>{
+    const w=W(trail);
+    const {w:cw,h:ch}=renderer.getSize();
+    renderer.tick(w,(ctx,cw,ch)=>{
+      drawDot(ctx,cw/2+cw*.34*Math.sin(3*t),ch/2+ch*.36*Math.sin(2*t),(t*35)%360,16);
+    });
+  });
+  cRaf=requestAnimationFrame(tickCmp);
 }
+initCmp();
+gateAnim('cmp',cmpShort.parentElement.parentElement,()=>{cRaf=requestAnimationFrame(tickCmp);},()=>cancelAnimationFrame(cRaf));
+window.addEventListener('resize',initCmp);
 
-stackTrail.addEventListener('input', drawWaterfall);
-drawWaterfall();
-
-// ═══════════════ 3. ACCUMULATION SIM ═══════════════
-const simTrail = document.getElementById('simTrail');
-const simTrailValue = document.getElementById('simTrailValue');
-const simFrame = document.getElementById('simFrame');
-const simFrameValue = document.getElementById('simFrameValue');
-const simPlay = document.getElementById('simPlay');
-const simReset = document.getElementById('simReset');
-let simPlaying = false, simInterval = null;
-
-function drawSim() {
-  const { ctx, W, H } = setupCanvas(document.getElementById('simCanvas'), 280);
-  const trail = parseInt(simTrail.value);
-  const currentFrame = parseInt(simFrame.value);
-  const w = weight(trail);
-  const totalFrames = 60;
-
-  simTrailValue.textContent = trail;
-  simFrameValue.textContent = `${currentFrame} / ${totalFrames}`;
-
-  const pad = { l: 8, r: 8, t: 8, b: 8 };
-  const gW = W - pad.l - pad.r, gH = H - pad.t - pad.b;
-
-  // Generate a synthetic "signal" — hue shifts over time
-  function frameHSL(f) {
-    const h = (f * 17 + 120) % 360;
-    return `hsl(${h}, 55%, 50%)`;
-  }
-
-  // Draw composite color strip for each frame position
-  const stripW = gW / totalFrames;
-  for (let t = 0; t <= currentFrame; t++) {
-    const x = pad.l + t * stripW;
-
-    // Compute composite color at time t via EMA
-    let r = 0, g = 0, b = 0;
-    let totalW = 0;
-    for (let f = 0; f <= t; f++) {
-      const age = t - f;
-      const c = Math.pow(1 - w, age) * w;
-      const h = (f * 17 + 120) % 360;
-      const [fr, fg, fb] = hslToRgb(h / 360, 0.55, 0.5);
-      r += fr * c; g += fg * c; b += fb * c;
-      totalW += c;
-    }
-    if (totalW > 0) { r /= totalW; g /= totalW; b /= totalW; }
-
-    // Draw the composite as a vertical column
-    ctx.fillStyle = `rgb(${Math.round(r*255)},${Math.round(g*255)},${Math.round(b*255)})`;
-    const alpha = t === currentFrame ? 1 : 0.6 + 0.4 * (t / currentFrame);
-    ctx.globalAlpha = alpha;
-    ctx.fillRect(x, pad.t, stripW - 1, gH * 0.6);
-
-    // Draw the input frame color below
-    ctx.fillStyle = frameHSL(t);
-    ctx.globalAlpha = t === currentFrame ? 1 : 0.3;
-    ctx.fillRect(x, pad.t + gH * 0.7, stripW - 1, gH * 0.25);
-  }
-  ctx.globalAlpha = 1;
-
-  // Labels
-  ctx.fillStyle = '#555'; ctx.font = '10px -apple-system, sans-serif';
-  ctx.textAlign = 'left';
-  ctx.fillText('composite', pad.l, pad.t + gH * 0.6 + 14);
-  ctx.fillText('input frames', pad.l, pad.t + gH * 0.7 - 4);
-
-  // Playhead
-  if (currentFrame > 0) {
-    const px = pad.l + currentFrame * stripW + stripW / 2;
-    ctx.strokeStyle = '#fff'; ctx.lineWidth = 1;
-    ctx.setLineDash([2, 2]);
-    ctx.beginPath(); ctx.moveTo(px, pad.t); ctx.lineTo(px, pad.t + gH); ctx.stroke();
-    ctx.setLineDash([]);
-  }
-}
-
-function hslToRgb(h, s, l) {
-  let r, g, b;
-  if (s === 0) { r = g = b = l; }
-  else {
-    const hue2rgb = (p, q, t) => {
-      if (t < 0) t += 1; if (t > 1) t -= 1;
-      if (t < 1/6) return p + (q - p) * 6 * t;
-      if (t < 1/2) return q;
-      if (t < 2/3) return p + (q - p) * (2/3 - t) * 6;
-      return p;
-    };
-    const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
-    const p = 2 * l - q;
-    r = hue2rgb(p, q, h + 1/3);
-    g = hue2rgb(p, q, h);
-    b = hue2rgb(p, q, h - 1/3);
-  }
-  return [r, g, b];
-}
-
-simTrail.addEventListener('input', drawSim);
-simFrame.addEventListener('input', drawSim);
-
-simPlay.addEventListener('click', () => {
-  if (simPlaying) {
-    clearInterval(simInterval); simPlaying = false;
-    simPlay.innerHTML = '&#9654; Play'; return;
-  }
-  simPlaying = true; simPlay.innerHTML = '&#9646;&#9646; Pause';
-  simInterval = setInterval(() => {
-    let v = parseInt(simFrame.value);
-    if (v >= 59) { clearInterval(simInterval); simPlaying = false; simPlay.innerHTML = '&#9654; Play'; return; }
-    simFrame.value = v + 1; drawSim();
-  }, 120);
-});
-
-simReset.addEventListener('click', () => {
-  clearInterval(simInterval); simPlaying = false;
-  simPlay.innerHTML = '&#9654; Play';
-  simFrame.value = 0; drawSim();
-});
-
-drawSim();
-
-// ═══════════════ 4. COMPARISON (ANIMATED) ═══════════════
-let compareFrame = 0, compareAnimating = false, compareInterval = null;
-
-function drawComparison(canvasId, trail, frame) {
-  const { ctx, W, H } = setupCanvas(document.getElementById(canvasId), 200);
-  const w = weight(trail);
-  const totalFrames = 60;
-  const pad = { l: 4, r: 4, t: 4, b: 20 };
-  const gW = W - pad.l - pad.r, gH = H - pad.t - pad.b;
-  const stripW = gW / totalFrames;
-
-  for (let t = 0; t < totalFrames; t++) {
-    const x = pad.l + t * stripW;
-    let r = 0, g = 0, b = 0, totalW = 0;
-    for (let f = 0; f <= t; f++) {
-      const age = t - f;
-      const c = Math.pow(1 - w, age) * w;
-      const h = (f * 17 + 120) % 360;
-      const [fr, fg, fb] = hslToRgb(h / 360, 0.55, 0.5);
-      r += fr * c; g += fg * c; b += fb * c; totalW += c;
-    }
-    if (totalW > 0) { r /= totalW; g /= totalW; b /= totalW; }
-
-    ctx.globalAlpha = t <= frame ? 1 : 0.15;
-    ctx.fillStyle = `rgb(${Math.round(r*255)},${Math.round(g*255)},${Math.round(b*255)})`;
-    ctx.fillRect(x, pad.t, stripW - 1, gH);
-  }
-  ctx.globalAlpha = 1;
-
-  // Playhead
-  if (frame < totalFrames) {
-    const px = pad.l + frame * stripW + stripW / 2;
-    ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5;
-    ctx.beginPath(); ctx.moveTo(px, pad.t); ctx.lineTo(px, pad.t + gH); ctx.stroke();
-    ctx.fillStyle = '#fff'; ctx.font = '9px SF Mono, monospace'; ctx.textAlign = 'center';
-    ctx.fillText(frame, px, H - 4);
-  }
-}
-
-function animateComparison() {
-  drawComparison('compareShort', 5, compareFrame);
-  drawComparison('compareLong', 80, compareFrame);
-}
-
-document.getElementById('comparePlay').addEventListener('click', () => {
-  if (compareAnimating) {
-    clearInterval(compareInterval); compareAnimating = false;
-    document.getElementById('comparePlay').innerHTML = '&#9654; Animate'; return;
-  }
-  compareFrame = 0; compareAnimating = true;
-  document.getElementById('comparePlay').innerHTML = '&#9646;&#9646; Stop';
-  compareInterval = setInterval(() => {
-    compareFrame++;
-    if (compareFrame >= 59) { clearInterval(compareInterval); compareAnimating = false; document.getElementById('comparePlay').innerHTML = '&#9654; Animate'; }
-    animateComparison();
-  }, 100);
-});
-
-animateComparison();
-
-// ═══════════════ 5. PIPELINE ═══════════════
-const pipelineSteps = [
-  { label: 'Load Image', detail: 'CIImage → Float32' },
-  { label: 'Exposure Adjust', detail: 'CIExposureAdjust' },
-  { label: 'Temperature & Tint', detail: 'CITemperatureAndTint' },
-  { label: 'Contrast (luma-preserving)', detail: 'luminosity blend' },
-  { label: 'Saturation & Vibrance', detail: 'CIColorControls' },
-  { label: 'Highlights & Shadows', detail: 'CIHighlightShadowAdjust' },
-  { label: 'Scale (if needed)', detail: 'CGAffineTransform' },
-  { label: 'Render to Float32 RGBA', detail: 'CIContext.render' },
-  { label: 'Exposure Norm / Deflicker', detail: 'vDSP multiply' },
-  { label: 'EMA Composite', detail: 'vDSP blend' },
-  { label: 'Brightness & Clamp', detail: 'vDSP_vsmul + vclip' },
-  { label: 'sRGB LUT → Video', detail: '4096-entry table' },
+// ══════════════════ 5. PIPELINE ══════════════════
+const steps=[
+  {phase:'gpu',label:'Load Image',detail:'CIImage → Float32'},
+  {phase:'gpu',label:'Exposure',detail:'CIExposureAdjust'},
+  {phase:'gpu',label:'Temperature & Tint',detail:'CITemperatureAndTint'},
+  {phase:'gpu',label:'Contrast',detail:'luma-preserving blend'},
+  {phase:'gpu',label:'Saturation & Vibrance',detail:'CIColorControls'},
+  {phase:'gpu',label:'Highlights & Shadows',detail:'CIHighlightShadowAdjust'},
+  {phase:'gpu',label:'Scale',detail:'CGAffineTransform'},
+  {phase:'render',label:'Render to Float32 RGBA',detail:'CIContext.render'},
+  {phase:'cpu',label:'Exposure Norm / Deflicker',detail:'vDSP multiply'},
+  {phase:'cpu',label:'EMA Composite',detail:'vDSP blend'},
+  {phase:'cpu',label:'Brightness & Clamp',detail:'vDSP_vsmul + vclip'},
+  {phase:'cpu',label:'sRGB LUT → Video',detail:'4096-entry table'},
 ];
 
-const pipelineFlow = document.getElementById('pipelineFlow');
-pipelineSteps.forEach((step, i) => {
-  if (i > 0) {
-    const arrow = document.createElement('div');
-    arrow.className = 'pipe-arrow';
-    arrow.textContent = '↓';
-    pipelineFlow.appendChild(arrow);
+const pf=document.getElementById('pipeFlow');
+let lastPhase='';
+steps.forEach((s,i)=>{
+  if(s.phase!==lastPhase){
+    lastPhase=s.phase;
+    const ph=document.createElement('div');
+    ph.className='pipe-phase '+(s.phase==='render'?'cpu':s.phase);
+    ph.textContent=s.phase==='gpu'?'GPU — CIFilter chain':s.phase==='render'?'GPU → CPU':' CPU — vDSP / Accelerate';
+    pf.appendChild(ph);
+  } else {
+    const a=document.createElement('div');a.className='pipe-arrow';a.textContent='↓';pf.appendChild(a);
   }
-  const node = document.createElement('div');
-  node.className = 'pipe-node';
-  node.dataset.index = i;
-  node.innerHTML = `<div class="num">${i + 1}</div><div class="pipe-label">${step.label}</div><div class="pipe-detail">${step.detail}</div>`;
-  pipelineFlow.appendChild(node);
+  const nd=document.createElement('div');
+  nd.className='pipe-node';nd.dataset.i=i;
+  nd.innerHTML=`<div class="n">${i+1}</div><div class="pl">${s.label}</div><div class="pd">${s.detail}</div>`;
+  pf.appendChild(nd);
 });
 
-// Animate pipeline
-let pipeStep = -1, pipeInterval = null;
-function animatePipeline() {
-  const nodes = document.querySelectorAll('.pipe-node');
-  pipeStep = (pipeStep + 1) % nodes.length;
-  nodes.forEach((n, i) => n.classList.toggle('active', i === pipeStep));
+let pStep=-1,pInt;
+function tickPipe(){
+  const nodes=document.querySelectorAll('.pipe-node');
+  pStep=(pStep+1)%nodes.length;
+  nodes.forEach((n,i)=>n.classList.toggle('on',i===pStep));
 }
-// Start when visible
-const pipeObs = new IntersectionObserver((entries) => {
-  entries.forEach(e => {
-    if (e.isIntersecting && !pipeInterval) {
-      pipeInterval = setInterval(animatePipeline, 800);
-    } else if (!e.isIntersecting && pipeInterval) {
-      clearInterval(pipeInterval); pipeInterval = null;
+gateAnim('pipe',document.getElementById('pipePanel'),
+  ()=>{pInt=setInterval(tickPipe,700);},
+  ()=>{clearInterval(pInt);}
+);
+
+// ══════════════════ 6. KEYFRAME ══════════════════
+const kfS=document.getElementById('kfStart'),kfE=document.getElementById('kfEnd'),kfEas=document.getElementById('kfEasing');
+const kfNote=document.getElementById('kfNote');
+let kfT=0,kfRaf;
+
+function drawKf(){
+  const{c:ctx,w:cW,h:H}=setup(document.getElementById('kfCanvas'),260);
+  const s=+kfS.value,e=+kfE.value,eType=kfEas.value;
+  document.getElementById('kfStartVal').textContent=s;
+  document.getElementById('kfEndVal').textContent=e;
+  const p={l:48,r:16,t:24,b:36},gW=cW-p.l-p.r,gH=H-p.t-p.b;
+  const mn=Math.min(s,e),mx=Math.max(s,e),rng=mx-mn||1;
+
+  ctx.strokeStyle='#1a1a1a';ctx.lineWidth=1;
+  for(let i=0;i<=4;i++){const y=p.t+gH*i/4;ctx.beginPath();ctx.moveTo(p.l,y);ctx.lineTo(p.l+gW,y);ctx.stroke();}
+  ctx.fillStyle='#444';ctx.font='9px SF Mono,monospace';ctx.textAlign='right';
+  for(let i=0;i<=4;i++) ctx.fillText(Math.round(mx-(mx-mn)*i/4),p.l-6,p.t+gH*i/4+3);
+  ctx.textAlign='center';
+  ['0%','25%','50%','75%','100%'].forEach((l,i)=>ctx.fillText(l,p.l+gW*i/4,H-8));
+  ctx.fillText('sequence position',p.l+gW/2,H);
+
+  // Linear ref
+  ctx.strokeStyle='#1e1e1e';ctx.lineWidth=1;ctx.setLineDash([4,4]);
+  ctx.beginPath();ctx.moveTo(p.l,p.t+gH*(1-(s-mn)/rng));ctx.lineTo(p.l+gW,p.t+gH*(1-(e-mn)/rng));ctx.stroke();ctx.setLineDash([]);
+
+  // Eased curve
+  ctx.beginPath();ctx.strokeStyle='#6a9a8a';ctx.lineWidth=2;
+  for(let i=0;i<=200;i++){const t=i/200,v=s+(e-s)*ease(t,eType),x=p.l+t*gW,y=p.t+gH*(1-(v-mn)/rng);i?ctx.lineTo(x,y):ctx.moveTo(x,y);}
+  ctx.stroke();
+  ctx.lineTo(p.l+gW,p.t+gH);ctx.lineTo(p.l,p.t+gH);ctx.closePath();ctx.fillStyle='rgba(106,154,138,.06)';ctx.fill();
+
+  // Playhead
+  const pt=(kfT%300)/300,pE=ease(pt,eType),pV=s+(e-s)*pE;
+  const px=p.l+pt*gW,py=p.t+gH*(1-(pV-mn)/rng);
+  ctx.strokeStyle='rgba(106,154,138,.25)';ctx.lineWidth=1;ctx.setLineDash([3,3]);
+  ctx.beginPath();ctx.moveTo(px,p.t);ctx.lineTo(px,p.t+gH);ctx.stroke();ctx.setLineDash([]);
+  ctx.beginPath();ctx.arc(px,py,4,0,Math.PI*2);ctx.fillStyle='#6a9a8a';ctx.fill();
+  ctx.strokeStyle='#fff';ctx.lineWidth=1.5;ctx.stroke();
+  ctx.fillStyle='#ddd';ctx.font='10px SF Mono,monospace';ctx.textAlign='left';
+  ctx.fillText('trail='+Math.round(pV),px+8,py-6);
+
+  kfNote.innerHTML=`Position <strong>${(pt*100).toFixed(0)}%</strong> → trail <strong>${Math.round(pV)}</strong>, weight <strong>${(W(Math.round(pV))*100).toFixed(1)}%</strong>`;
+}
+function tickKf(){if(!animating.kf)return;kfT++;drawKf();kfRaf=requestAnimationFrame(tickKf);}
+gateAnim('kf',document.getElementById('kfCanvas'),()=>{kfRaf=requestAnimationFrame(tickKf);},()=>cancelAnimationFrame(kfRaf));
+[kfS,kfE].forEach(e=>e.addEventListener('input',drawKf));
+kfEas.addEventListener('change',drawKf);
+drawKf();
+
+// ══════════════════ 7. DEFLICKER ══════════════════
+const fAmt=document.getElementById('fAmt'),fRad=document.getElementById('fRad');
+const seed=[];for(let i=0;i<120;i++) seed.push(Math.sin(i*.7)*.3+Math.sin(i*2.3)*.15+Math.sin(i*5.1)*.08+Math.sin(i*11.7)*.04);
+
+function gauss(data,r){
+  const sig=r/3,k=[];let s=0;
+  for(let i=-r;i<=r;i++){const v=Math.exp(-i*i/(2*sig*sig));k.push(v);s+=v;}
+  k.forEach((_,i,a)=>a[i]/=s);
+  const out=new Array(data.length);
+  for(let i=0;i<data.length;i++){
+    let v=0;
+    for(let j=-r;j<=r;j++){
+      let idx=i+j;
+      if(idx<0)idx=Math.min(data.length-1,-idx);
+      if(idx>=data.length)idx=Math.max(0,2*data.length-2-idx);
+      v+=data[idx]*k[j+r];
     }
-  });
-}, { threshold: 0.3 });
-pipeObs.observe(document.getElementById('pipelinePanel'));
-
-// ═══════════════ 6. KEYFRAME TRAIL ═══════════════
-const kfStart = document.getElementById('kfStart');
-const kfEnd = document.getElementById('kfEnd');
-const kfEasing = document.getElementById('kfEasing');
-const kfInsight = document.getElementById('kfInsight');
-
-let kfPlayhead = 0, kfAnimating = false;
-
-function drawKeyframe() {
-  const { ctx, W, H } = setupCanvas(document.getElementById('kfCanvas'), 280);
-  const startTrail = parseInt(kfStart.value);
-  const endTrail = parseInt(kfEnd.value);
-  const easing = kfEasing.value;
-
-  document.getElementById('kfStartVal').textContent = startTrail;
-  document.getElementById('kfEndVal').textContent = endTrail;
-
-  const pad = { l: 50, r: 20, t: 30, b: 40 };
-  const gW = W - pad.l - pad.r, gH = H - pad.t - pad.b;
-  const numPoints = 200;
-
-  // Trail curve
-  ctx.strokeStyle = '#333'; ctx.lineWidth = 1;
-  for (let i = 0; i <= 4; i++) {
-    const y = pad.t + gH * i / 4;
-    ctx.beginPath(); ctx.moveTo(pad.l, y); ctx.lineTo(pad.l + gW, y); ctx.stroke();
+    out[i]=v;
   }
-
-  // Y axis labels
-  ctx.fillStyle = '#555'; ctx.font = '10px SF Mono, monospace'; ctx.textAlign = 'right';
-  const minT = Math.min(startTrail, endTrail);
-  const maxT = Math.max(startTrail, endTrail);
-  for (let i = 0; i <= 4; i++) {
-    const val = maxT - (maxT - minT) * (i / 4);
-    const y = pad.t + gH * i / 4;
-    ctx.fillText(Math.round(val), pad.l - 8, y + 4);
-  }
-
-  // X axis
-  ctx.textAlign = 'center';
-  ctx.fillText('0%', pad.l, H - 8);
-  ctx.fillText('25%', pad.l + gW * 0.25, H - 8);
-  ctx.fillText('50%', pad.l + gW * 0.5, H - 8);
-  ctx.fillText('75%', pad.l + gW * 0.75, H - 8);
-  ctx.fillText('100%', pad.l + gW, H - 8);
-  ctx.fillText('sequence position', pad.l + gW / 2, H);
-
-  // Draw linear reference (faint)
-  ctx.strokeStyle = '#2a2a2a'; ctx.lineWidth = 1;
-  ctx.setLineDash([4, 4]);
-  ctx.beginPath();
-  ctx.moveTo(pad.l, pad.t + gH * (1 - (startTrail - minT) / (maxT - minT || 1)));
-  ctx.lineTo(pad.l + gW, pad.t + gH * (1 - (endTrail - minT) / (maxT - minT || 1)));
-  ctx.stroke();
-  ctx.setLineDash([]);
-
-  // Draw eased curve
-  ctx.beginPath(); ctx.strokeStyle = '#6a9a8a'; ctx.lineWidth = 2.5;
-  for (let i = 0; i <= numPoints; i++) {
-    const t = i / numPoints;
-    const eased = applyEasing(t, easing);
-    const trailVal = startTrail + (endTrail - startTrail) * eased;
-    const x = pad.l + t * gW;
-    const y = pad.t + gH * (1 - (trailVal - minT) / (maxT - minT || 1));
-    if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
-  }
-  ctx.stroke();
-
-  // Fill under curve
-  const lastEased = applyEasing(1, easing);
-  const lastTrail = startTrail + (endTrail - startTrail) * lastEased;
-  ctx.lineTo(pad.l + gW, pad.t + gH);
-  ctx.lineTo(pad.l, pad.t + gH);
-  ctx.closePath();
-  ctx.fillStyle = 'rgba(106, 154, 138, 0.08)';
-  ctx.fill();
-
-  // Animated playhead
-  const pt = (kfPlayhead % 300) / 300;
-  const pEased = applyEasing(pt, easing);
-  const pTrail = startTrail + (endTrail - startTrail) * pEased;
-  const px = pad.l + pt * gW;
-  const py = pad.t + gH * (1 - (pTrail - minT) / (maxT - minT || 1));
-
-  ctx.beginPath();
-  ctx.arc(px, py, 5, 0, Math.PI * 2);
-  ctx.fillStyle = '#6a9a8a';
-  ctx.fill();
-  ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5;
-  ctx.stroke();
-
-  // Vertical playhead line
-  ctx.strokeStyle = 'rgba(106, 154, 138, 0.3)'; ctx.lineWidth = 1;
-  ctx.setLineDash([3, 3]);
-  ctx.beginPath(); ctx.moveTo(px, pad.t); ctx.lineTo(px, pad.t + gH); ctx.stroke();
-  ctx.setLineDash([]);
-
-  // Value readout
-  ctx.fillStyle = '#e0e0e0'; ctx.font = '11px SF Mono, monospace'; ctx.textAlign = 'left';
-  ctx.fillText(`trail = ${Math.round(pTrail)}`, px + 10, py - 8);
-
-  // Weight readout
-  const currentW = weight(Math.round(pTrail));
-  kfInsight.innerHTML = `At position <strong>${(pt * 100).toFixed(0)}%</strong>, trail = <strong>${Math.round(pTrail)}</strong>, frame weight = <strong>${(currentW * 100).toFixed(1)}%</strong>. Easing: ${easing}.`;
+  return out;
 }
 
-function animateKf() {
-  kfPlayhead++;
-  drawKeyframe();
-  requestAnimationFrame(animateKf);
-}
+function drawFlicker(){
+  const amt=+fAmt.value/100,rad=+fRad.value;
+  document.getElementById('fAmtVal').textContent=Math.round(amt*100)+'%';
+  document.getElementById('fRadVal').textContent=rad;
+  const n=120,raw=[],sm=[];
+  for(let i=0;i<n;i++) raw.push(.5+seed[i]*amt);
+  const smoothed=gauss(raw,rad);
 
-kfStart.addEventListener('input', drawKeyframe);
-kfEnd.addEventListener('input', drawKeyframe);
-kfEasing.addEventListener('change', drawKeyframe);
-animateKf();
+  // Chart
+  const{c:ctx,w:cW,h:H}=setup(document.getElementById('fCanvas'),220);
+  const all=[...raw,...smoothed],yMn=Math.min(...all)-.02,yMx=Math.max(...all)+.02;
+  const p={l:46,r:16,t:16,b:34},gW=cW-p.l-p.r,gH=H-p.t-p.b;
+  const toY=v=>p.t+gH*(1-(v-yMn)/(yMx-yMn)),toX=i=>p.l+(i/(n-1))*gW;
 
-// ═══════════════ 7. DEFLICKER ═══════════════
-const flickerAmt = document.getElementById('flickerAmt');
-const flickerRadius = document.getElementById('flickerRadius');
+  ctx.strokeStyle='#1a1a1a';ctx.lineWidth=1;
+  for(let i=0;i<=4;i++){const y=p.t+gH*i/4;ctx.beginPath();ctx.moveTo(p.l,y);ctx.lineTo(p.l+gW,y);ctx.stroke();}
+  ctx.fillStyle='#444';ctx.font='9px SF Mono,monospace';ctx.textAlign='right';
+  for(let i=0;i<=4;i++) ctx.fillText((yMx-(yMx-yMn)*i/4).toFixed(2),p.l-5,p.t+gH*i/4+3);
+  ctx.textAlign='center';for(let i=0;i<=n;i+=20) ctx.fillText(i,toX(i),H-10);
+  ctx.fillText('frame',p.l+gW/2,H-1);
 
-// Pre-generate a stable flicker pattern
-const flickerSeed = [];
-for (let i = 0; i < 120; i++) flickerSeed.push(Math.sin(i * 0.7) * 0.3 + Math.sin(i * 2.3) * 0.15 + Math.sin(i * 5.1) * 0.08);
+  // Raw
+  ctx.beginPath();ctx.strokeStyle='rgba(200,80,80,.5)';ctx.lineWidth=1.5;
+  for(let i=0;i<n;i++){const x=toX(i),y=toY(raw[i]);i?ctx.lineTo(x,y):ctx.moveTo(x,y);}ctx.stroke();
 
-function gaussianSmooth(data, radius) {
-  const sigma = radius / 3;
-  const kernel = [];
-  let sum = 0;
-  for (let i = -radius; i <= radius; i++) {
-    const v = Math.exp(-(i * i) / (2 * sigma * sigma));
-    kernel.push(v); sum += v;
-  }
-  kernel.forEach((_, i, a) => a[i] /= sum);
-
-  const result = new Array(data.length);
-  for (let i = 0; i < data.length; i++) {
-    let v = 0;
-    for (let k = -radius; k <= radius; k++) {
-      // Mirror padding
-      let idx = i + k;
-      if (idx < 0) idx = Math.min(data.length - 1, -idx);
-      if (idx >= data.length) idx = Math.max(0, 2 * data.length - 2 - idx);
-      v += data[idx] * kernel[k + radius];
-    }
-    result[i] = v;
-  }
-  return result;
-}
-
-function drawFlicker() {
-  const { ctx, W, H } = setupCanvas(document.getElementById('flickerCanvas'), 260);
-  const amount = parseInt(flickerAmt.value) / 100;
-  const radius = parseInt(flickerRadius.value);
-  document.getElementById('flickerAmtVal').textContent = Math.round(amount * 100) + '%';
-  document.getElementById('flickerRadiusVal').textContent = radius;
-
-  const pad = { l: 50, r: 20, t: 20, b: 40 };
-  const gW = W - pad.l - pad.r, gH = H - pad.t - pad.b;
-  const n = 120;
-
-  // Generate raw luminance with flicker
-  const raw = [];
-  for (let i = 0; i < n; i++) {
-    raw.push(0.5 + flickerSeed[i] * amount);
-  }
-
-  const smoothed = gaussianSmooth(raw, radius);
-
-  // Y range
-  const allVals = [...raw, ...smoothed];
-  const yMin = Math.min(...allVals) - 0.02;
-  const yMax = Math.max(...allVals) + 0.02;
-
-  // Grid
-  ctx.strokeStyle = '#222'; ctx.lineWidth = 1;
-  for (let i = 0; i <= 4; i++) {
-    const y = pad.t + gH * i / 4;
-    ctx.beginPath(); ctx.moveTo(pad.l, y); ctx.lineTo(pad.l + gW, y); ctx.stroke();
-  }
-
-  // Y labels
-  ctx.fillStyle = '#555'; ctx.font = '10px SF Mono, monospace'; ctx.textAlign = 'right';
-  for (let i = 0; i <= 4; i++) {
-    const val = yMax - (yMax - yMin) * (i / 4);
-    ctx.fillText(val.toFixed(2), pad.l - 6, pad.t + gH * i / 4 + 4);
-  }
-
-  // X labels
-  ctx.textAlign = 'center';
-  ctx.fillText('frame', pad.l + gW / 2, H - 4);
-  for (let i = 0; i <= n; i += 20) {
-    ctx.fillText(i, pad.l + (i / n) * gW, H - 16);
-  }
-
-  function toY(v) { return pad.t + gH * (1 - (v - yMin) / (yMax - yMin)); }
-  function toX(i) { return pad.l + (i / (n - 1)) * gW; }
-
-  // Raw luminance (jittery)
-  ctx.beginPath(); ctx.strokeStyle = 'rgba(200, 80, 80, 0.6)'; ctx.lineWidth = 1.5;
-  for (let i = 0; i < n; i++) {
-    const x = toX(i), y = toY(raw[i]);
-    if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
-  }
-  ctx.stroke();
-
-  // Smoothed luminance
-  ctx.beginPath(); ctx.strokeStyle = '#6a9a8a'; ctx.lineWidth = 2.5;
-  for (let i = 0; i < n; i++) {
-    const x = toX(i), y = toY(smoothed[i]);
-    if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
-  }
-  ctx.stroke();
+  // Smoothed
+  ctx.beginPath();ctx.strokeStyle='#6a9a8a';ctx.lineWidth=2;
+  for(let i=0;i<n;i++){const x=toX(i),y=toY(smoothed[i]);i?ctx.lineTo(x,y):ctx.moveTo(x,y);}ctx.stroke();
 
   // Legend
-  ctx.fillStyle = 'rgba(200, 80, 80, 0.8)';
-  ctx.fillRect(pad.l + 10, pad.t + 6, 16, 3);
-  ctx.fillStyle = '#888'; ctx.font = '10px -apple-system, sans-serif'; ctx.textAlign = 'left';
-  ctx.fillText('raw luminance', pad.l + 32, pad.t + 12);
+  ctx.fillStyle='rgba(200,80,80,.7)';ctx.fillRect(p.l+8,p.t+5,14,2);
+  ctx.fillStyle='#666';ctx.font='9px -apple-system,sans-serif';ctx.textAlign='left';ctx.fillText('raw',p.l+26,p.t+9);
+  ctx.fillStyle='#6a9a8a';ctx.fillRect(p.l+8,p.t+18,14,2);
+  ctx.fillStyle='#666';ctx.fillText('smoothed (r='+rad+')',p.l+26,p.t+22);
 
-  ctx.fillStyle = '#6a9a8a';
-  ctx.fillRect(pad.l + 10, pad.t + 22, 16, 3);
-  ctx.fillStyle = '#888';
-  ctx.fillText('Gaussian smoothed (r=' + radius + ')', pad.l + 32, pad.t + 28);
-
-  // Show correction range
-  ctx.fillStyle = '#444'; ctx.font = '9px SF Mono, monospace';
-  const maxCorr = Math.max(...raw.map((v, i) => Math.abs(smoothed[i] / v - 1)));
-  ctx.fillText(`max correction: ${(maxCorr * 100).toFixed(1)}%`, pad.l + gW - 120, pad.t + 12);
+  // Frame strip
+  const{c:sCtx,w:sW,h:sH}=setup(document.getElementById('fStrip'),80);
+  const sw=sW/n;
+  for(let i=0;i<n;i++){
+    // Raw brightness
+    const rawB=Math.max(0,Math.min(1,raw[i]*2));
+    sCtx.fillStyle=`rgb(${rawB*180|0},${rawB*160|0},${rawB*140|0})`;
+    sCtx.fillRect(i*sw,0,sw-1,sH*.42);
+    // Corrected
+    const corr=smoothed[i]/raw[i];
+    const corrB=Math.max(0,Math.min(1,raw[i]*corr*2));
+    sCtx.fillStyle=`rgb(${corrB*180|0},${corrB*160|0},${corrB*140|0})`;
+    sCtx.fillRect(i*sw,sH*.58,sw-1,sH*.42);
+  }
+  sCtx.fillStyle='#444';sCtx.font='9px -apple-system,sans-serif';
+  sCtx.fillText('raw',4,sH*.35);
+  sCtx.fillText('corrected',4,sH*.95);
 }
+fAmt.addEventListener('input',drawFlicker);fRad.addEventListener('input',drawFlicker);drawFlicker();
 
-flickerAmt.addEventListener('input', drawFlicker);
-flickerRadius.addEventListener('input', drawFlicker);
-drawFlicker();
+// ══════════════════ 8. BLEND ══════════════════
+const blTrail=document.getElementById('blTrail'),c1=document.getElementById('c1'),c2=document.getElementById('c2'),c3=document.getElementById('c3');
+const blResult=document.getElementById('blResult');
 
-// ═══════════════ 8. INTERACTIVE BLEND ═══════════════
-const blendTrail = document.getElementById('blendTrail');
-const blendColor1 = document.getElementById('blendColor1');
-const blendColor2 = document.getElementById('blendColor2');
-const blendColor3 = document.getElementById('blendColor3');
-const blendResult = document.getElementById('blendResult');
-
-function hexToRgb(hex) {
-  const r = parseInt(hex.slice(1, 3), 16) / 255;
-  const g = parseInt(hex.slice(3, 5), 16) / 255;
-  const b = parseInt(hex.slice(5, 7), 16) / 255;
-  return [r, g, b];
-}
-
-// sRGB to linear
-function toLinear(c) { return c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4); }
-function toSrgb(c) { return c <= 0.0031308 ? c * 12.92 : 1.055 * Math.pow(c, 1 / 2.4) - 0.055; }
-
-function drawBlend() {
-  const { ctx, W, H } = setupCanvas(document.getElementById('blendCanvas'), 200);
-  const trail = parseInt(blendTrail.value);
-  const w = weight(trail);
-  document.getElementById('blendTrailVal').textContent = trail;
-
-  const colors = [
-    hexToRgb(blendColor1.value),
-    hexToRgb(blendColor2.value),
-    hexToRgb(blendColor3.value),
-  ];
-
-  // Simulate 90 frames of looping 3 colors through EMA in linear space
-  const totalFrames = 90;
-  const history = [];
-  let comp = [0, 0, 0]; // linear
-
-  for (let f = 0; f < totalFrames; f++) {
-    const c = colors[f % 3].map(toLinear);
-    comp = comp.map((v, i) => v * (1 - w) + c[i] * w);
-    history.push(comp.map(toSrgb));
+function drawBlend(){
+  const trail=+blTrail.value,w=W(trail);
+  document.getElementById('blTrailVal').textContent=trail;
+  const cols=[hex2rgb(c1.value),hex2rgb(c2.value),hex2rgb(c3.value)];
+  const total=90,hist=[];
+  let comp=[0,0,0];
+  for(let f=0;f<total;f++){
+    const c=cols[f%3].map(lin);
+    comp=comp.map((v,i)=>v*(1-w)+c[i]*w);
+    hist.push(comp.map(srgb));
   }
 
-  const pad = { l: 8, r: 8, t: 8, b: 20 };
-  const gW = W - pad.l - pad.r, gH = H - pad.t - pad.b;
-  const stripW = gW / totalFrames;
-
-  // Draw color evolution
-  for (let f = 0; f < totalFrames; f++) {
-    const [r, g, b] = history[f];
-    ctx.fillStyle = `rgb(${Math.round(r*255)},${Math.round(g*255)},${Math.round(b*255)})`;
-    ctx.fillRect(pad.l + f * stripW, pad.t, stripW, gH * 0.6);
-
-    // Input color below
-    const [ir, ig, ib] = colors[f % 3];
-    ctx.fillStyle = `rgb(${Math.round(ir*255)},${Math.round(ig*255)},${Math.round(ib*255)})`;
-    ctx.fillRect(pad.l + f * stripW, pad.t + gH * 0.7, stripW, gH * 0.25);
+  // Color strip
+  const{c:ctx,w:cW,h:H}=setup(document.getElementById('blCanvas'),180);
+  const p={l:6,r:6,t:6,b:18},gW=cW-p.l-p.r,gH=H-p.t-p.b,sw=gW/total;
+  for(let f=0;f<total;f++){
+    const[r,g,b]=hist[f];
+    ctx.fillStyle=`rgb(${r*255|0},${g*255|0},${b*255|0})`;
+    ctx.fillRect(p.l+f*sw,p.t,sw,gH*.55);
+    const[ir,ig,ib]=cols[f%3];
+    ctx.fillStyle=`rgb(${ir*255|0},${ig*255|0},${ib*255|0})`;
+    ctx.fillRect(p.l+f*sw,p.t+gH*.65,sw,gH*.3);
   }
+  ctx.fillStyle='#444';ctx.font='9px -apple-system,sans-serif';ctx.textAlign='left';
+  ctx.fillText('composite',p.l,p.t+gH*.55+12);ctx.fillText('input',p.l,p.t+gH*.65-3);
 
-  ctx.fillStyle = '#555'; ctx.font = '9px -apple-system, sans-serif'; ctx.textAlign = 'left';
-  ctx.fillText('EMA composite', pad.l, pad.t + gH * 0.6 + 13);
-  ctx.fillText('input cycle', pad.l, pad.t + gH * 0.7 - 3);
+  const fin=hist[hist.length-1];
+  const fr=fin[0]*255|0,fg=fin[1]*255|0,fb=fin[2]*255|0;
+  blResult.style.background=`rgb(${fr},${fg},${fb})`;
+  blResult.textContent=`rgb(${fr},${fg},${fb})`;
 
-  // Update result swatch
-  const final = history[history.length - 1];
-  const fr = Math.round(final[0] * 255), fg = Math.round(final[1] * 255), fb = Math.round(final[2] * 255);
-  blendResult.style.background = `rgb(${fr},${fg},${fb})`;
-  blendResult.textContent = `rgb(${fr}, ${fg}, ${fb})`;
+  // Channel convergence
+  const{c:chCtx,w:chW,h:chH}=setup(document.getElementById('blChannels'),140);
+  const cp={l:36,r:12,t:12,b:24},cgW=chW-cp.l-cp.r,cgH=chH-cp.t-cp.b;
+  chCtx.strokeStyle='#1a1a1a';chCtx.lineWidth=1;
+  for(let i=0;i<=4;i++){const y=cp.t+cgH*i/4;chCtx.beginPath();chCtx.moveTo(cp.l,y);chCtx.lineTo(cp.l+cgW,y);chCtx.stroke();}
+  chCtx.fillStyle='#333';chCtx.font='9px SF Mono,monospace';chCtx.textAlign='right';
+  ['1.0','0.5','0'].forEach((l,i)=>chCtx.fillText(l,cp.l-5,cp.t+cgH*i/2+3));
+
+  const chColors=['rgba(220,80,80,.8)','rgba(80,140,220,.8)','rgba(80,200,100,.8)'];
+  for(let ch=0;ch<3;ch++){
+    chCtx.beginPath();chCtx.strokeStyle=chColors[ch];chCtx.lineWidth=1.5;
+    for(let f=0;f<total;f++){
+      const x=cp.l+(f/(total-1))*cgW,y=cp.t+cgH*(1-hist[f][ch]);
+      f?chCtx.lineTo(x,y):chCtx.moveTo(x,y);
+    }
+    chCtx.stroke();
+  }
+  chCtx.fillStyle='#444';chCtx.font='9px -apple-system,sans-serif';chCtx.textAlign='center';
+  chCtx.fillText('frame',cp.l+cgW/2,chH-4);
 }
+[blTrail,c1,c2,c3].forEach(e=>e.addEventListener('input',drawBlend));drawBlend();
 
-[blendTrail, blendColor1, blendColor2, blendColor3].forEach(el => el.addEventListener('input', drawBlend));
-drawBlend();
-
-// ═══════════════ RESIZE ═══════════════
-window.addEventListener('resize', () => {
-  drawDecay(); drawWaterfall(); drawSim();
-  animateComparison(); drawFlicker(); drawBlend();
-  drawKeyframe();
-});
+// ══════════════════ RESIZE ══════════════════
+window.addEventListener('resize',()=>{drawDecay();drawWf();drawFlicker();drawBlend();drawKf();});
 </script>
 </body>
 </html>
