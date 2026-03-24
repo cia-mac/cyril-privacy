@@ -553,9 +553,10 @@ function srgb(c){return c<=.0031308?c*12.92:1.055*c**(1/2.4)-.055;}
 // ══════════════════ CANVAS UTIL ══════════════════
 function setup(cv, h) {
   const d=devicePixelRatio||1, r=cv.getBoundingClientRect();
-  cv.width=r.width*d; cv.height=h*d;
-  const c=cv.getContext('2d'); c.scale(d,d);
-  return {c,w:r.width,h};
+  const w=Math.max(r.width,100);
+  cv.width=w*d; cv.height=h*d;
+  const c=cv.getContext('2d'); c.setTransform(d,0,0,d,0,0);
+  return {c,w,h};
 }
 
 // ══════════════════ OBSERVER ══════════════════
@@ -591,28 +592,30 @@ function gateAnim(id, el, startFn, stopFn) {
 // ══════════════════ TRAIL RENDERER (shared) ══════════════════
 // Uses offscreen canvas for correct EMA: composite = composite*(1-w) + frame*w
 function createTrailRenderer(canvas, heightPx) {
-  let ctx, cw, ch, offscreen, offCtx;
+  let ctx, cw, ch, offscreen, offCtx, d=1;
   function init() {
-    const d=devicePixelRatio||1, r=canvas.getBoundingClientRect();
-    cw=r.width; ch=canvas.height ? heightPx : r.height;
+    d=devicePixelRatio||1;
+    const r=canvas.getBoundingClientRect();
+    cw=Math.max(r.width,100); ch=heightPx||Math.max(r.height,100);
     canvas.width=cw*d; canvas.height=ch*d;
-    ctx=canvas.getContext('2d'); ctx.scale(d,d);
+    ctx=canvas.getContext('2d'); ctx.setTransform(d,0,0,d,0,0);
     ctx.fillStyle='#0d0d0d'; ctx.fillRect(0,0,cw,ch);
     offscreen=document.createElement('canvas');
     offscreen.width=cw*d; offscreen.height=ch*d;
-    offCtx=offscreen.getContext('2d'); offCtx.scale(d,d);
+    offCtx=offscreen.getContext('2d'); offCtx.setTransform(d,0,0,d,0,0);
   }
   function tick(w, drawFn) {
-    // Draw current frame on offscreen
+    if(!offscreen||offscreen.width<1||offscreen.height<1){init();return;}
     offCtx.fillStyle='#0d0d0d';
     offCtx.fillRect(0,0,cw,ch);
     drawFn(offCtx, cw, ch);
-    // EMA blend: composite = composite*(1-w) + frame*w
+    // EMA: composite = composite*(1-w) + frame*w — draw in pixel space
+    ctx.save(); ctx.setTransform(1,0,0,1,0,0);
     ctx.globalAlpha=w;
     ctx.drawImage(offscreen,0,0);
     ctx.globalAlpha=1;
+    ctx.restore();
   }
-  init();
   return { init, tick, getSize:()=>({w:cw,h:ch}) };
 }
 
@@ -649,10 +652,8 @@ function tickHero() {
   heroRaf = requestAnimationFrame(tickHero);
 }
 
-initHero();
 gateAnim('hero', heroCanvas, () => { heroRaf=requestAnimationFrame(tickHero); }, () => cancelAnimationFrame(heroRaf));
 heroTrail.addEventListener('input', () => { heroTrailVal.textContent=heroTrail.value; });
-window.addEventListener('resize', initHero);
 
 // ══════════════════ 1. DECAY ══════════════════
 const trailSlider=document.getElementById('trailSlider');
@@ -700,7 +701,7 @@ function drawDecay(){
 
   decayNote.innerHTML=`At trail <strong>${trail}</strong>, weight = <strong>${(w*100).toFixed(1)}%</strong>. Decays to 10% after ${trail} frames, 1% after ~${trail*2}.`;
 }
-trailSlider.addEventListener('input',drawDecay);drawDecay();
+trailSlider.addEventListener('input',drawDecay);
 
 // ══════════════════ 2. WATERFALL ══════════════════
 const wfTrail=document.getElementById('wfTrail');
@@ -735,7 +736,7 @@ function drawWf(){
   }
   wfNote.innerHTML=`Top <strong>${n}</strong> frames account for <strong>${(sum*100).toFixed(1)}%</strong> of the composite.`;
 }
-wfTrail.addEventListener('input',drawWf);drawWf();
+wfTrail.addEventListener('input',drawWf);
 
 // ══════════════════ 3. TRAIL DEMO ══════════════════
 const trailDemo=document.getElementById('trailDemo');
@@ -755,10 +756,8 @@ function tickTrail(){
   });
   tRaf=requestAnimationFrame(tickTrail);
 }
-initTrail();
 gateAnim('trail',trailCanvas,()=>{tRaf=requestAnimationFrame(tickTrail);},()=>cancelAnimationFrame(tRaf));
 trailDemo.addEventListener('input',()=>{trailDemoVal.textContent=trailDemo.value;});
-window.addEventListener('resize',initTrail);
 
 // ══════════════════ 4. COMPARE ══════════════════
 const cmpShort=document.getElementById('cmpShort');
@@ -783,9 +782,7 @@ function tickCmp(){
   });
   cRaf=requestAnimationFrame(tickCmp);
 }
-initCmp();
 gateAnim('cmp',cmpShort.parentElement.parentElement,()=>{cRaf=requestAnimationFrame(tickCmp);},()=>cancelAnimationFrame(cRaf));
-window.addEventListener('resize',initCmp);
 
 // ══════════════════ 5. PIPELINE ══════════════════
 const steps=[
@@ -879,7 +876,6 @@ function tickKf(){if(!animating.kf)return;kfT++;drawKf();kfRaf=requestAnimationF
 gateAnim('kf',document.getElementById('kfCanvas'),()=>{kfRaf=requestAnimationFrame(tickKf);},()=>cancelAnimationFrame(kfRaf));
 [kfS,kfE].forEach(e=>e.addEventListener('input',drawKf));
 kfEas.addEventListener('change',drawKf);
-drawKf();
 
 // ══════════════════ 7. DEFLICKER ══════════════════
 const fAmt=document.getElementById('fAmt'),fRad=document.getElementById('fRad');
@@ -956,7 +952,7 @@ function drawFlicker(){
   sCtx.fillText('raw',4,sH*.35);
   sCtx.fillText('corrected',4,sH*.95);
 }
-fAmt.addEventListener('input',drawFlicker);fRad.addEventListener('input',drawFlicker);drawFlicker();
+fAmt.addEventListener('input',drawFlicker);fRad.addEventListener('input',drawFlicker);
 
 // ══════════════════ 8. BLEND ══════════════════
 const blTrail=document.getElementById('blTrail'),c1=document.getElementById('c1'),c2=document.getElementById('c2'),c3=document.getElementById('c3');
@@ -1013,10 +1009,26 @@ function drawBlend(){
   chCtx.fillStyle='#444';chCtx.font='9px -apple-system,sans-serif';chCtx.textAlign='center';
   chCtx.fillText('frame',cp.l+cgW/2,chH-4);
 }
-[blTrail,c1,c2,c3].forEach(e=>e.addEventListener('input',drawBlend));drawBlend();
+[blTrail,c1,c2,c3].forEach(e=>e.addEventListener('input',drawBlend));
 
-// ══════════════════ RESIZE ══════════════════
-window.addEventListener('resize',()=>{drawDecay();drawWf();drawFlicker();drawBlend();drawKf();});
+// ══════════════════ INIT (deferred to after layout) ══════════════════
+function initAll(){
+  initHero();
+  drawDecay();
+  drawWf();
+  initTrail();
+  initCmp();
+  drawKf();
+  drawFlicker();
+  drawBlend();
+}
+// First paint — ensure layout is resolved before measuring canvas widths
+requestAnimationFrame(()=>requestAnimationFrame(initAll));
+
+window.addEventListener('resize',()=>{
+  initHero();initTrail();initCmp();
+  drawDecay();drawWf();drawFlicker();drawBlend();drawKf();
+});
 </script>
 </body>
 </html>
