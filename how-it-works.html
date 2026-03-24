@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>How Cyril Works — Temporal Accumulation Explained</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #0d0d0d;
+    color: #e0e0e0;
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro', 'Helvetica Neue', sans-serif;
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
+  .container {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 60px 24px;
+  }
+  h1 {
+    font-size: 2.4em;
+    font-weight: 700;
+    color: #6a9a8a;
+    margin-bottom: 8px;
+    letter-spacing: -0.5px;
+  }
+  h1 span { color: #e0e0e0; }
+  .subtitle {
+    font-size: 1.1em;
+    color: #888;
+    margin-bottom: 48px;
+  }
+  h2 {
+    font-size: 1.3em;
+    font-weight: 600;
+    color: #6a9a8a;
+    margin: 48px 0 16px;
+  }
+  p { color: #bbb; margin-bottom: 16px; font-size: 0.95em; }
+  .formula {
+    background: #1a1a1a;
+    border: 1px solid #2a2a2a;
+    border-radius: 12px;
+    padding: 20px 24px;
+    margin: 24px 0;
+    font-family: 'SF Mono', 'Menlo', monospace;
+    font-size: 0.95em;
+    color: #6a9a8a;
+  }
+  .formula .label { color: #666; font-size: 0.8em; margin-bottom: 8px; font-family: -apple-system, sans-serif; }
+
+  /* Visualization panels */
+  .viz-panel {
+    background: #141414;
+    border: 1px solid #222;
+    border-radius: 16px;
+    padding: 32px;
+    margin: 32px 0;
+  }
+  canvas {
+    width: 100%;
+    border-radius: 8px;
+    display: block;
+  }
+
+  /* Slider controls */
+  .control-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin: 16px 0;
+  }
+  .control-row label {
+    min-width: 120px;
+    font-size: 0.85em;
+    color: #888;
+  }
+  .control-row input[type="range"] {
+    flex: 1;
+    -webkit-appearance: none;
+    height: 4px;
+    background: #333;
+    border-radius: 2px;
+    outline: none;
+  }
+  .control-row input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #6a9a8a;
+    cursor: pointer;
+  }
+  .control-row .value {
+    min-width: 48px;
+    text-align: right;
+    font-family: 'SF Mono', monospace;
+    font-size: 0.85em;
+    color: #6a9a8a;
+  }
+
+  /* Frame strip */
+  .frame-strip {
+    display: flex;
+    gap: 3px;
+    margin: 16px 0;
+    height: 60px;
+    overflow: hidden;
+    border-radius: 8px;
+  }
+  .frame-strip .frame {
+    flex: 1;
+    border-radius: 2px;
+    transition: opacity 0.3s;
+    position: relative;
+  }
+  .frame-strip .frame .weight-label {
+    position: absolute;
+    bottom: 2px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 8px;
+    font-family: 'SF Mono', monospace;
+    color: rgba(255,255,255,0.7);
+    text-shadow: 0 1px 2px rgba(0,0,0,0.8);
+  }
+
+  /* Stack diagram */
+  .stack-viz {
+    position: relative;
+    height: 320px;
+    margin: 24px 0;
+  }
+  .stack-layer {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    border-radius: 8px;
+    border: 1px solid rgba(106, 154, 138, 0.3);
+    transition: all 0.4s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'SF Mono', monospace;
+    font-size: 11px;
+    color: rgba(255,255,255,0.8);
+  }
+
+  /* Result preview */
+  .result-bar {
+    height: 40px;
+    border-radius: 8px;
+    margin: 16px 0;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+  }
+  .result-segment {
+    height: 100%;
+    transition: width 0.4s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 9px;
+    font-family: 'SF Mono', monospace;
+    color: rgba(255,255,255,0.7);
+    min-width: 0;
+    overflow: hidden;
+  }
+
+  .section-label {
+    font-size: 0.75em;
+    color: #555;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 12px;
+  }
+
+  .decay-graph { position: relative; }
+
+  .insight {
+    background: rgba(106, 154, 138, 0.08);
+    border-left: 3px solid #6a9a8a;
+    padding: 16px 20px;
+    margin: 24px 0;
+    border-radius: 0 8px 8px 0;
+    font-size: 0.9em;
+    color: #aaa;
+  }
+  .insight strong { color: #6a9a8a; }
+
+  footer {
+    margin-top: 64px;
+    padding-top: 24px;
+    border-top: 1px solid #222;
+    color: #444;
+    font-size: 0.8em;
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+<h1>How <span>Cyril</span> Works</h1>
+<p class="subtitle">Temporal accumulation — turning time-lapse sequences into ghostly, layered motion</p>
+
+<h2>The Core Idea</h2>
+<p>Cyril reads a sequence of time-lapse images (hundreds or thousands of frames from a locked camera) and blends them using an <strong style="color:#6a9a8a">exponential moving average</strong>. Each new frame is mixed into a running composite — recent frames contribute strongly, older frames fade away gradually. The result: ghostly trails of motion, like a long exposure that remembers.</p>
+
+<div class="formula">
+  <div class="label">For each new frame:</div>
+  composite = composite × (1 - w) + new_frame × w
+  <br><br>
+  <div class="label">Weight from trail length:</div>
+  w = 1 - e<sup>ln(0.10) / trail</sup>
+  <br><br>
+  <div class="label">Meaning: after <em>trail</em> frames, a pixel decays to 10% of its original contribution.</div>
+</div>
+
+<!-- ═══════════════ DECAY CURVE ═══════════════ -->
+<h2>1. The Decay Curve</h2>
+<p>How quickly does a frame's contribution fade? Drag the trail length to see.</p>
+
+<div class="viz-panel">
+  <div class="control-row">
+    <label>Trail Length</label>
+    <input type="range" id="trailSlider" min="2" max="200" value="20">
+    <span class="value" id="trailValue">20</span>
+  </div>
+  <canvas id="decayCanvas" height="240"></canvas>
+  <div class="insight" id="decayInsight">
+    At trail length <strong>20</strong>, each frame's weight is <strong>10.9%</strong>. A frame fades to 10% contribution after 20 frames and to 1% after 40.
+  </div>
+</div>
+
+<!-- ═══════════════ FRAME STACK ═══════════════ -->
+<h2>2. The Stack</h2>
+<p>Think of it as layers of glass. The newest frame sits on top at full opacity. Older frames show through with decreasing weight — their contribution compounds exponentially.</p>
+
+<div class="viz-panel">
+  <div class="control-row">
+    <label>Trail Length</label>
+    <input type="range" id="stackTrail" min="2" max="60" value="10">
+    <span class="value" id="stackTrailValue">10</span>
+  </div>
+  <div class="section-label">Frame contributions at current position (newest → oldest)</div>
+  <div class="result-bar" id="stackBar"></div>
+  <div class="stack-viz" id="stackViz"></div>
+</div>
+
+<!-- ═══════════════ ACCUMULATION SIM ═══════════════ -->
+<h2>3. Accumulation in Motion</h2>
+<p>Watch the composite build frame by frame. Each colored bar represents a frame's contribution to the final pixel. Press play to see how the blend evolves.</p>
+
+<div class="viz-panel">
+  <div class="control-row">
+    <label>Trail Length</label>
+    <input type="range" id="simTrail" min="2" max="40" value="8">
+    <span class="value" id="simTrailValue">8</span>
+  </div>
+  <div class="control-row">
+    <label>Frame</label>
+    <input type="range" id="simFrame" min="0" max="39" value="0">
+    <span class="value" id="simFrameValue">0 / 40</span>
+  </div>
+  <div style="display:flex;gap:12px;margin:8px 0 16px;">
+    <button id="simPlay" style="background:#6a9a8a;color:#000;border:none;padding:8px 20px;border-radius:6px;cursor:pointer;font-weight:600;">▶ Play</button>
+    <button id="simReset" style="background:#333;color:#aaa;border:none;padding:8px 20px;border-radius:6px;cursor:pointer;">Reset</button>
+  </div>
+  <canvas id="simCanvas" height="300"></canvas>
+  <div class="section-label" style="margin-top:16px;">Composite breakdown — who contributes what</div>
+  <div class="result-bar" id="simBar" style="height:32px;"></div>
+</div>
+
+<!-- ═══════════════ COMPARISON ═══════════════ -->
+<h2>4. Short vs Long Trail</h2>
+<p>Short trails = sharp, recent motion. Long trails = deep, accumulated history.</p>
+
+<div class="viz-panel">
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;">
+    <div>
+      <div class="section-label">Trail = 5 (responsive)</div>
+      <canvas id="compareShort" height="180"></canvas>
+      <p style="font-size:0.8em;margin-top:8px;">Only the last ~5 frames matter. Motion is crisp, trails are short.</p>
+    </div>
+    <div>
+      <div class="section-label">Trail = 80 (deep memory)</div>
+      <canvas id="compareLong" height="180"></canvas>
+      <p style="font-size:0.8em;margin-top:8px;">Dozens of frames contribute. Motion smears into long, ghostly trails.</p>
+    </div>
+  </div>
+</div>
+
+<h2>5. The Pipeline</h2>
+<div class="formula">
+  <div class="label">For each frame in the sequence:</div>
+  1. Load image → decode to Float32 linear sRGB pixels<br>
+  2. Apply color correction (8 CIFilter parameters, GPU)<br>
+  3. Apply exposure normalization (EXIF-based EV matching)<br>
+  4. Apply deflicker (Gaussian-smoothed luminance)<br>
+  5. <strong>EMA blend into running composite</strong><br>
+  6. Convert via sRGB LUT → write to video/image
+</div>
+
+<div class="insight">
+  The entire pixel pipeline runs in <strong>Float32 linear light</strong> — no gamma curve artifacts during blending. The sRGB conversion happens only at the final output stage via a 4096-entry lookup table. All vector math uses Apple's <strong>vDSP/Accelerate</strong> framework for SIMD-optimized batch operations.
+</div>
+
+<footer>
+  Cyril — Temporal Accumulation for macOS<br>
+  Built by Ciamac Parhizi
+</footer>
+
+</div>
+
+<script>
+// ═══════════════ CORE MATH ═══════════════
+function weight(trail) {
+  const t = Math.max(2, trail);
+  return 1.0 - Math.exp(Math.log(0.10) / t);
+}
+
+function decay(trail, framesAgo) {
+  const w = weight(trail);
+  return Math.pow(1 - w, framesAgo) * w;
+}
+
+// ═══════════════ COLORS ═══════════════
+const palette = [
+  '#6a9a8a','#8ab4a6','#4e7e6e','#3d6b5c','#9cc4b4',
+  '#5a8a7a','#7aaa9a','#2d5b4c','#aad4c4','#4a7868',
+  '#6090a0','#80b0c0','#50808e','#3a6a78','#90c0d0',
+  '#a07090','#c090b0','#805070','#6a4060','#d0a0c0',
+  '#a09060','#c0b080','#807040','#6a5a30','#d0c090',
+  '#a06060','#c08080','#804040','#6a3030','#d09090',
+  '#6080a0','#80a0c0','#406080','#304a6a','#90b0d0',
+  '#80a060','#a0c080','#608040','#4a6a30','#b0d090',
+  '#9080a0','#b0a0c0','#706080','#5a4a6a','#c0b0d0',
+  '#a09080','#c0b0a0','#807060','#6a5a4a','#d0c0b0'
+];
+
+function frameColor(i) { return palette[i % palette.length]; }
+
+// ═══════════════ 1. DECAY CURVE ═══════════════
+const decayCanvas = document.getElementById('decayCanvas');
+const decayCtx = decayCanvas.getContext('2d');
+const trailSlider = document.getElementById('trailSlider');
+const trailValue = document.getElementById('trailValue');
+const decayInsight = document.getElementById('decayInsight');
+
+function drawDecay() {
+  const dpr = window.devicePixelRatio || 1;
+  const rect = decayCanvas.getBoundingClientRect();
+  decayCanvas.width = rect.width * dpr;
+  decayCanvas.height = 240 * dpr;
+  const ctx = decayCtx;
+  ctx.scale(dpr, dpr);
+  const W = rect.width, H = 240;
+
+  const trail = parseInt(trailSlider.value);
+  const w = weight(trail);
+  trailValue.textContent = trail;
+
+  ctx.clearRect(0, 0, W, H);
+
+  const pad = { l: 50, r: 20, t: 20, b: 40 };
+  const gW = W - pad.l - pad.r;
+  const gH = H - pad.t - pad.b;
+
+  // Grid
+  ctx.strokeStyle = '#222';
+  ctx.lineWidth = 1;
+  for (let i = 0; i <= 10; i++) {
+    const y = pad.t + gH * (1 - i / 10);
+    ctx.beginPath(); ctx.moveTo(pad.l, y); ctx.lineTo(pad.l + gW, y); ctx.stroke();
+  }
+
+  // Axes labels
+  ctx.fillStyle = '#555';
+  ctx.font = '11px SF Mono, monospace';
+  ctx.textAlign = 'right';
+  for (let i = 0; i <= 10; i += 2) {
+    const y = pad.t + gH * (1 - i / 10);
+    ctx.fillText((i * 10) + '%', pad.l - 8, y + 4);
+  }
+  ctx.textAlign = 'center';
+  const maxFrames = Math.min(trail * 4, 200);
+  for (let i = 0; i <= maxFrames; i += Math.max(1, Math.floor(maxFrames / 8))) {
+    const x = pad.l + (i / maxFrames) * gW;
+    ctx.fillText(i, x, H - 8);
+  }
+  ctx.fillText('frames ago →', pad.l + gW / 2, H - 0);
+
+  // Curve
+  ctx.beginPath();
+  ctx.strokeStyle = '#6a9a8a';
+  ctx.lineWidth = 2.5;
+  for (let i = 0; i <= maxFrames; i++) {
+    const contribution = Math.pow(1 - w, i) * w;
+    const x = pad.l + (i / maxFrames) * gW;
+    const y = pad.t + gH * (1 - contribution / w);
+    if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+  }
+  ctx.stroke();
+
+  // Fill under curve
+  ctx.lineTo(pad.l + gW, pad.t + gH);
+  ctx.lineTo(pad.l, pad.t + gH);
+  ctx.closePath();
+  ctx.fillStyle = 'rgba(106, 154, 138, 0.1)';
+  ctx.fill();
+
+  // 10% line
+  const tenPctY = pad.t + gH * (1 - 0.1 * w / w);
+  // Actually let's show where 10% of max weight is
+  const tenY = pad.t + gH * 0.9;
+  ctx.strokeStyle = 'rgba(255,100,100,0.3)';
+  ctx.lineWidth = 1;
+  ctx.setLineDash([4, 4]);
+  ctx.beginPath(); ctx.moveTo(pad.l, tenY); ctx.lineTo(pad.l + gW, tenY); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = '#844';
+  ctx.textAlign = 'left';
+  ctx.fillText('10% threshold', pad.l + 4, tenY - 6);
+
+  // Trail marker
+  const trailX = pad.l + (trail / maxFrames) * gW;
+  ctx.strokeStyle = 'rgba(255,200,100,0.4)';
+  ctx.setLineDash([4, 4]);
+  ctx.beginPath(); ctx.moveTo(trailX, pad.t); ctx.lineTo(trailX, pad.t + gH); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = '#a84';
+  ctx.textAlign = 'center';
+  ctx.fillText('trail=' + trail, trailX, pad.t - 4);
+
+  // Insight
+  const wPct = (w * 100).toFixed(1);
+  const fadeFrames = Math.ceil(trail * 2);
+  decayInsight.innerHTML = `At trail length <strong>${trail}</strong>, each frame's weight is <strong>${wPct}%</strong>. A frame fades to 10% contribution after ${trail} frames and to 1% after ~${fadeFrames}.`;
+}
+
+trailSlider.addEventListener('input', drawDecay);
+drawDecay();
+
+// ═══════════════ 2. STACK ═══════════════
+const stackTrail = document.getElementById('stackTrail');
+const stackTrailValue = document.getElementById('stackTrailValue');
+const stackBar = document.getElementById('stackBar');
+const stackViz = document.getElementById('stackViz');
+
+function drawStack() {
+  const trail = parseInt(stackTrail.value);
+  const w = weight(trail);
+  stackTrailValue.textContent = trail;
+
+  const numLayers = Math.min(trail * 2, 30);
+  const contributions = [];
+  let total = 0;
+  for (let i = 0; i < numLayers; i++) {
+    const c = Math.pow(1 - w, i) * w;
+    contributions.push(c);
+    total += c;
+  }
+  const remainder = 1 - total;
+
+  // Bar
+  let barHTML = '';
+  contributions.forEach((c, i) => {
+    const pct = (c / 1) * 100;
+    if (pct > 0.5) {
+      barHTML += `<div class="result-segment" style="width:${pct}%;background:${frameColor(i)};">${pct > 3 ? (c*100).toFixed(1)+'%' : ''}</div>`;
+    }
+  });
+  if (remainder > 0.005) {
+    barHTML += `<div class="result-segment" style="width:${remainder*100}%;background:#222;">…</div>`;
+  }
+  stackBar.innerHTML = barHTML;
+
+  // Stack layers
+  let vizHTML = '';
+  const maxLayers = Math.min(numLayers, 16);
+  for (let i = 0; i < maxLayers; i++) {
+    const c = contributions[i];
+    const opacity = Math.max(0.15, c / contributions[0]);
+    const width = 70 + (1 - i / maxLayers) * 25;
+    const y = 10 + i * (290 / maxLayers);
+    vizHTML += `<div class="stack-layer" style="
+      top:${y}px;
+      width:${width}%;
+      height:${Math.max(16, 280/maxLayers - 4)}px;
+      background:${frameColor(i)};
+      opacity:${opacity};
+    ">Frame -${i}: ${(c*100).toFixed(1)}%</div>`;
+  }
+  stackViz.innerHTML = vizHTML;
+}
+
+stackTrail.addEventListener('input', drawStack);
+drawStack();
+
+// ═══════════════ 3. ACCUMULATION SIM ═══════════════
+const simTrail = document.getElementById('simTrail');
+const simTrailValue = document.getElementById('simTrailValue');
+const simFrame = document.getElementById('simFrame');
+const simFrameValue = document.getElementById('simFrameValue');
+const simCanvas = document.getElementById('simCanvas');
+const simCtx = simCanvas.getContext('2d');
+const simBar = document.getElementById('simBar');
+const simPlay = document.getElementById('simPlay');
+const simReset = document.getElementById('simReset');
+
+let simPlaying = false;
+let simInterval = null;
+
+function drawSim() {
+  const dpr = window.devicePixelRatio || 1;
+  const rect = simCanvas.getBoundingClientRect();
+  simCanvas.width = rect.width * dpr;
+  simCanvas.height = 300 * dpr;
+  const ctx = simCtx;
+  ctx.scale(dpr, dpr);
+  const W = rect.width, H = 300;
+
+  const trail = parseInt(simTrail.value);
+  const currentFrame = parseInt(simFrame.value);
+  const w = weight(trail);
+  const totalFrames = 40;
+
+  simTrailValue.textContent = trail;
+  simFrameValue.textContent = `${currentFrame} / ${totalFrames}`;
+
+  ctx.clearRect(0, 0, W, H);
+
+  const pad = { l: 40, r: 20, t: 30, b: 30 };
+  const gW = W - pad.l - pad.r;
+  const gH = H - pad.t - pad.b;
+
+  // For each frame up to currentFrame, calculate its contribution at currentFrame
+  const contributions = [];
+  for (let f = 0; f <= currentFrame; f++) {
+    const age = currentFrame - f;
+    const c = Math.pow(1 - w, age) * w;
+    contributions.push({ frame: f, contribution: c, age: age });
+  }
+
+  // Normalize to show relative contributions
+  const totalC = contributions.reduce((s, c) => s + c.contribution, 0);
+
+  // Draw stacked area chart showing how contributions evolve over time
+  const barWidth = gW / totalFrames;
+
+  // For each time step, show the composition
+  for (let t = 0; t <= currentFrame; t++) {
+    const x = pad.l + t * barWidth;
+    let y = pad.t + gH;
+
+    // Calculate all frame contributions at time t
+    const contribs = [];
+    for (let f = 0; f <= t; f++) {
+      const age = t - f;
+      const c = Math.pow(1 - w, age) * w;
+      contribs.push({ frame: f, contribution: c });
+    }
+    const sum = contribs.reduce((s, c) => s + c.contribution, 0);
+
+    // Draw stacked bar
+    contribs.forEach(c => {
+      const h = (c.contribution / sum) * gH;
+      ctx.fillStyle = frameColor(c.frame);
+      ctx.globalAlpha = t === currentFrame ? 1 : 0.4;
+      ctx.fillRect(x, y - h, barWidth - 1, h);
+      y -= h;
+    });
+  }
+  ctx.globalAlpha = 1;
+
+  // Current frame marker
+  const cx = pad.l + currentFrame * barWidth + barWidth / 2;
+  ctx.strokeStyle = '#fff';
+  ctx.lineWidth = 1;
+  ctx.setLineDash([2, 2]);
+  ctx.beginPath(); ctx.moveTo(cx, pad.t); ctx.lineTo(cx, pad.t + gH); ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Frame numbers on x axis
+  ctx.fillStyle = '#555';
+  ctx.font = '10px SF Mono, monospace';
+  ctx.textAlign = 'center';
+  for (let i = 0; i < totalFrames; i += Math.max(1, Math.floor(totalFrames / 20))) {
+    ctx.fillText(i, pad.l + i * barWidth + barWidth / 2, H - 8);
+  }
+
+  // Y axis
+  ctx.textAlign = 'right';
+  ctx.fillText('100%', pad.l - 6, pad.t + 4);
+  ctx.fillText('0%', pad.l - 6, pad.t + gH + 4);
+
+  // Labels
+  ctx.fillStyle = '#666';
+  ctx.textAlign = 'center';
+  ctx.fillText('frame number →', pad.l + gW / 2, H - 0);
+  ctx.save();
+  ctx.translate(12, pad.t + gH / 2);
+  ctx.rotate(-Math.PI / 2);
+  ctx.fillText('contribution', 0, 0);
+  ctx.restore();
+
+  // Bottom bar: current composition
+  let barHTML = '';
+  if (contributions.length > 0) {
+    const sorted = [...contributions].sort((a, b) => b.contribution - a.contribution);
+    sorted.forEach(c => {
+      const pct = (c.contribution / totalC) * 100;
+      if (pct > 0.3) {
+        barHTML += `<div class="result-segment" style="width:${pct}%;background:${frameColor(c.frame)};">${pct > 4 ? 'f' + c.frame : ''}</div>`;
+      }
+    });
+  }
+  simBar.innerHTML = barHTML;
+}
+
+simTrail.addEventListener('input', () => { drawSim(); });
+simFrame.addEventListener('input', drawSim);
+
+simPlay.addEventListener('click', () => {
+  if (simPlaying) {
+    clearInterval(simInterval);
+    simPlaying = false;
+    simPlay.textContent = '▶ Play';
+    return;
+  }
+  simPlaying = true;
+  simPlay.textContent = '⏸ Pause';
+  simInterval = setInterval(() => {
+    let v = parseInt(simFrame.value);
+    if (v >= 39) { clearInterval(simInterval); simPlaying = false; simPlay.textContent = '▶ Play'; return; }
+    simFrame.value = v + 1;
+    drawSim();
+  }, 200);
+});
+
+simReset.addEventListener('click', () => {
+  clearInterval(simInterval);
+  simPlaying = false;
+  simPlay.textContent = '▶ Play';
+  simFrame.value = 0;
+  drawSim();
+});
+
+drawSim();
+
+// ═══════════════ 4. COMPARISON ═══════════════
+function drawComparison(canvasId, trail) {
+  const canvas = document.getElementById(canvasId);
+  const ctx = canvas.getContext('2d');
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.getBoundingClientRect();
+  canvas.width = rect.width * dpr;
+  canvas.height = 180 * dpr;
+  ctx.scale(dpr, dpr);
+  const W = rect.width, H = 180;
+
+  const w = weight(trail);
+  const pad = { l: 8, r: 8, t: 8, b: 8 };
+  const gW = W - pad.l - pad.r;
+  const gH = H - pad.t - pad.b;
+  const totalFrames = 40;
+  const barWidth = gW / totalFrames;
+
+  ctx.clearRect(0, 0, W, H);
+
+  // Show composition at the last frame
+  for (let t = 0; t < totalFrames; t++) {
+    const x = pad.l + t * barWidth;
+    let y = pad.t + gH;
+
+    const contribs = [];
+    for (let f = 0; f <= t; f++) {
+      const age = t - f;
+      const c = Math.pow(1 - w, age) * w;
+      contribs.push({ frame: f, contribution: c });
+    }
+    const sum = contribs.reduce((s, c) => s + c.contribution, 0);
+
+    contribs.forEach(c => {
+      const h = (c.contribution / sum) * gH;
+      ctx.fillStyle = frameColor(c.frame);
+      ctx.fillRect(x, y - h, barWidth - 1, h);
+      y -= h;
+    });
+  }
+}
+
+drawComparison('compareShort', 5);
+drawComparison('compareLong', 80);
+
+// Resize handler
+window.addEventListener('resize', () => {
+  drawDecay();
+  drawStack();
+  drawSim();
+  drawComparison('compareShort', 5);
+  drawComparison('compareLong', 80);
+});
+</script>
+</body>
+</html>
