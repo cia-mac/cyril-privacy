@@ -6,6 +6,7 @@
 <title>How Cyril Works — Temporal Accumulation Explained</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
   body {
     background: #0d0d0d;
     color: #e0e0e0;
@@ -35,8 +36,12 @@
     font-size: 1.3em;
     font-weight: 600;
     color: #6a9a8a;
-    margin: 48px 0 16px;
+    margin: 64px 0 16px;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.6s ease, transform 0.6s ease;
   }
+  h2.visible { opacity: 1; transform: translateY(0); }
   p { color: #bbb; margin-bottom: 16px; font-size: 0.95em; }
   .formula {
     background: #1a1a1a;
@@ -50,21 +55,19 @@
   }
   .formula .label { color: #666; font-size: 0.8em; margin-bottom: 8px; font-family: -apple-system, sans-serif; }
 
-  /* Visualization panels */
   .viz-panel {
     background: #141414;
     border: 1px solid #222;
     border-radius: 16px;
     padding: 32px;
     margin: 32px 0;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.6s ease, transform 0.6s ease;
   }
-  canvas {
-    width: 100%;
-    border-radius: 8px;
-    display: block;
-  }
+  .viz-panel.visible { opacity: 1; transform: translateY(0); }
+  canvas { width: 100%; border-radius: 8px; display: block; }
 
-  /* Slider controls */
   .control-row {
     display: flex;
     align-items: center;
@@ -86,8 +89,7 @@
   }
   .control-row input[type="range"]::-webkit-slider-thumb {
     -webkit-appearance: none;
-    width: 16px;
-    height: 16px;
+    width: 16px; height: 16px;
     border-radius: 50%;
     background: #6a9a8a;
     cursor: pointer;
@@ -99,74 +101,14 @@
     font-size: 0.85em;
     color: #6a9a8a;
   }
-
-  /* Frame strip */
-  .frame-strip {
-    display: flex;
-    gap: 3px;
-    margin: 16px 0;
-    height: 60px;
-    overflow: hidden;
-    border-radius: 8px;
-  }
-  .frame-strip .frame {
-    flex: 1;
-    border-radius: 2px;
-    transition: opacity 0.3s;
-    position: relative;
-  }
-  .frame-strip .frame .weight-label {
-    position: absolute;
-    bottom: 2px;
-    left: 50%;
-    transform: translateX(-50%);
-    font-size: 8px;
-    font-family: 'SF Mono', monospace;
-    color: rgba(255,255,255,0.7);
-    text-shadow: 0 1px 2px rgba(0,0,0,0.8);
-  }
-
-  /* Stack diagram */
-  .stack-viz {
-    position: relative;
-    height: 320px;
-    margin: 24px 0;
-  }
-  .stack-layer {
-    position: absolute;
-    left: 50%;
-    transform: translateX(-50%);
-    border-radius: 8px;
-    border: 1px solid rgba(106, 154, 138, 0.3);
-    transition: all 0.4s ease;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-family: 'SF Mono', monospace;
-    font-size: 11px;
-    color: rgba(255,255,255,0.8);
-  }
-
-  /* Result preview */
-  .result-bar {
-    height: 40px;
-    border-radius: 8px;
-    margin: 16px 0;
-    position: relative;
-    overflow: hidden;
-    display: flex;
-  }
-  .result-segment {
-    height: 100%;
-    transition: width 0.4s ease;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 9px;
-    font-family: 'SF Mono', monospace;
-    color: rgba(255,255,255,0.7);
-    min-width: 0;
-    overflow: hidden;
+  .control-row select {
+    background: #222;
+    color: #ccc;
+    border: 1px solid #333;
+    border-radius: 6px;
+    padding: 4px 8px;
+    font-size: 0.85em;
+    outline: none;
   }
 
   .section-label {
@@ -176,8 +118,6 @@
     letter-spacing: 1px;
     margin-bottom: 12px;
   }
-
-  .decay-graph { position: relative; }
 
   .insight {
     background: rgba(106, 154, 138, 0.08);
@@ -190,6 +130,113 @@
   }
   .insight strong { color: #6a9a8a; }
 
+  .btn {
+    border: none;
+    padding: 8px 20px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.85em;
+    transition: opacity 0.2s;
+  }
+  .btn:hover { opacity: 0.85; }
+  .btn-primary { background: #6a9a8a; color: #000; }
+  .btn-secondary { background: #333; color: #aaa; }
+
+  /* Pipeline nodes */
+  .pipeline-flow {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    margin: 24px 0;
+  }
+  .pipe-node {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 14px 20px;
+    background: #1a1a1a;
+    border: 1px solid #2a2a2a;
+    border-radius: 10px;
+    position: relative;
+    transition: border-color 0.3s, background 0.3s;
+  }
+  .pipe-node.active {
+    border-color: #6a9a8a;
+    background: rgba(106, 154, 138, 0.08);
+  }
+  .pipe-node .num {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    background: #222;
+    border: 1px solid #333;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'SF Mono', monospace;
+    font-size: 0.75em;
+    color: #666;
+    flex-shrink: 0;
+    transition: background 0.3s, border-color 0.3s, color 0.3s;
+  }
+  .pipe-node.active .num {
+    background: #6a9a8a;
+    border-color: #6a9a8a;
+    color: #000;
+  }
+  .pipe-node .pipe-label {
+    font-size: 0.9em;
+    color: #aaa;
+    transition: color 0.3s;
+  }
+  .pipe-node.active .pipe-label { color: #e0e0e0; }
+  .pipe-node .pipe-detail {
+    font-size: 0.75em;
+    color: #555;
+    font-family: 'SF Mono', monospace;
+    margin-left: auto;
+    transition: color 0.3s;
+  }
+  .pipe-node.active .pipe-detail { color: #6a9a8a; }
+  .pipe-arrow {
+    text-align: center;
+    color: #333;
+    font-size: 1.2em;
+    line-height: 1;
+    padding: 2px 0;
+  }
+
+  /* Blend simulator */
+  .blend-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin: 16px 0;
+  }
+  .blend-swatch {
+    height: 80px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'SF Mono', monospace;
+    font-size: 0.8em;
+    color: rgba(255,255,255,0.7);
+    text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+  }
+  .blend-result {
+    height: 80px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'SF Mono', monospace;
+    font-size: 0.85em;
+    color: rgba(255,255,255,0.8);
+    text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+    border: 2px solid #6a9a8a;
+  }
+
   footer {
     margin-top: 64px;
     padding-top: 24px;
@@ -198,30 +245,39 @@
     font-size: 0.8em;
     text-align: center;
   }
+
+  @media (max-width: 600px) {
+    .container { padding: 32px 16px; }
+    h1 { font-size: 1.8em; }
+    .viz-panel { padding: 20px 16px; }
+    .control-row label { min-width: 80px; }
+    .blend-grid { grid-template-columns: 1fr; }
+    .pipe-node .pipe-detail { display: none; }
+  }
 </style>
 </head>
 <body>
 <div class="container">
 
 <h1>How <span>Cyril</span> Works</h1>
-<p class="subtitle">Temporal accumulation — turning time-lapse sequences into ghostly, layered motion</p>
+<p class="subtitle">Temporal accumulation — blending time-lapse sequences into layered motion trails</p>
 
 <h2>The Core Idea</h2>
-<p>Cyril reads a sequence of time-lapse images (hundreds or thousands of frames from a locked camera) and blends them using an <strong style="color:#6a9a8a">exponential moving average</strong>. Each new frame is mixed into a running composite — recent frames contribute strongly, older frames fade away gradually. The result: ghostly trails of motion, like a long exposure that remembers.</p>
+<p>Cyril reads a sequence of time-lapse images and blends them using an <strong style="color:#6a9a8a">exponential moving average</strong>. Each new frame mixes into a running composite. Recent frames contribute strongly; older frames decay. The result: long-exposure-like trails where motion accumulates over time.</p>
 
 <div class="formula">
-  <div class="label">For each new frame:</div>
+  <div class="label">EMA update (per frame):</div>
   composite = composite × (1 - w) + new_frame × w
   <br><br>
   <div class="label">Weight from trail length:</div>
   w = 1 - e<sup>ln(0.10) / trail</sup>
   <br><br>
-  <div class="label">Meaning: after <em>trail</em> frames, a pixel decays to 10% of its original contribution.</div>
+  <div class="label">After <em>trail</em> frames, a pixel's contribution decays to 10%.</div>
 </div>
 
-<!-- ═══════════════ DECAY CURVE ═══════════════ -->
+<!-- ═══════════════ 1. DECAY CURVE ═══════════════ -->
 <h2>1. The Decay Curve</h2>
-<p>How quickly does a frame's contribution fade? Drag the trail length to see.</p>
+<p>How fast does a frame's influence fade? Drag the trail length.</p>
 
 <div class="viz-panel">
   <div class="control-row">
@@ -230,29 +286,25 @@
     <span class="value" id="trailValue">20</span>
   </div>
   <canvas id="decayCanvas" height="240"></canvas>
-  <div class="insight" id="decayInsight">
-    At trail length <strong>20</strong>, each frame's weight is <strong>10.9%</strong>. A frame fades to 10% contribution after 20 frames and to 1% after 40.
-  </div>
+  <div class="insight" id="decayInsight"></div>
 </div>
 
-<!-- ═══════════════ FRAME STACK ═══════════════ -->
-<h2>2. The Stack</h2>
-<p>Think of it as layers of glass. The newest frame sits on top at full opacity. Older frames show through with decreasing weight — their contribution compounds exponentially.</p>
+<!-- ═══════════════ 2. FRAME WATERFALL ═══════════════ -->
+<h2>2. Frame Contributions</h2>
+<p>Each frame's weight in the composite, visualized as a signal cascade. The newest frame enters at full weight; each prior frame's contribution has been exponentially reduced by the EMA update.</p>
 
 <div class="viz-panel">
   <div class="control-row">
     <label>Trail Length</label>
-    <input type="range" id="stackTrail" min="2" max="60" value="10">
-    <span class="value" id="stackTrailValue">10</span>
+    <input type="range" id="stackTrail" min="2" max="80" value="12">
+    <span class="value" id="stackTrailValue">12</span>
   </div>
-  <div class="section-label">Frame contributions at current position (newest → oldest)</div>
-  <div class="result-bar" id="stackBar"></div>
-  <div class="stack-viz" id="stackViz"></div>
+  <canvas id="waterfallCanvas" height="320"></canvas>
 </div>
 
-<!-- ═══════════════ ACCUMULATION SIM ═══════════════ -->
+<!-- ═══════════════ 3. ACCUMULATION SIM ═══════════════ -->
 <h2>3. Accumulation in Motion</h2>
-<p>Watch the composite build frame by frame. Each colored bar represents a frame's contribution to the final pixel. Press play to see how the blend evolves.</p>
+<p>Watch the composite evolve frame by frame. The canvas simulates a moving colored signal being blended via EMA. The bottom strip shows the composite's current color breakdown.</p>
 
 <div class="viz-panel">
   <div class="control-row">
@@ -262,50 +314,118 @@
   </div>
   <div class="control-row">
     <label>Frame</label>
-    <input type="range" id="simFrame" min="0" max="39" value="0">
-    <span class="value" id="simFrameValue">0 / 40</span>
+    <input type="range" id="simFrame" min="0" max="59" value="0">
+    <span class="value" id="simFrameValue">0 / 60</span>
   </div>
   <div style="display:flex;gap:12px;margin:8px 0 16px;">
-    <button id="simPlay" style="background:#6a9a8a;color:#000;border:none;padding:8px 20px;border-radius:6px;cursor:pointer;font-weight:600;">▶ Play</button>
-    <button id="simReset" style="background:#333;color:#aaa;border:none;padding:8px 20px;border-radius:6px;cursor:pointer;">Reset</button>
+    <button class="btn btn-primary" id="simPlay">&#9654; Play</button>
+    <button class="btn btn-secondary" id="simReset">Reset</button>
   </div>
-  <canvas id="simCanvas" height="300"></canvas>
-  <div class="section-label" style="margin-top:16px;">Composite breakdown — who contributes what</div>
-  <div class="result-bar" id="simBar" style="height:32px;"></div>
+  <canvas id="simCanvas" height="280"></canvas>
 </div>
 
-<!-- ═══════════════ COMPARISON ═══════════════ -->
+<!-- ═══════════════ 4. SHORT vs LONG ═══════════════ -->
 <h2>4. Short vs Long Trail</h2>
-<p>Short trails = sharp, recent motion. Long trails = deep, accumulated history.</p>
+<p>Short trails respond to recent motion. Long trails accumulate deep history. The playhead sweeps through — watch how the composition differs.</p>
 
 <div class="viz-panel">
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;">
     <div>
-      <div class="section-label">Trail = 5 (responsive)</div>
-      <canvas id="compareShort" height="180"></canvas>
-      <p style="font-size:0.8em;margin-top:8px;">Only the last ~5 frames matter. Motion is crisp, trails are short.</p>
+      <div class="section-label">Trail = 5 — responsive</div>
+      <canvas id="compareShort" height="200"></canvas>
     </div>
     <div>
-      <div class="section-label">Trail = 80 (deep memory)</div>
-      <canvas id="compareLong" height="180"></canvas>
-      <p style="font-size:0.8em;margin-top:8px;">Dozens of frames contribute. Motion smears into long, ghostly trails.</p>
+      <div class="section-label">Trail = 80 — deep memory</div>
+      <canvas id="compareLong" height="200"></canvas>
     </div>
+  </div>
+  <div style="text-align:center;margin-top:16px;">
+    <button class="btn btn-primary" id="comparePlay">&#9654; Animate</button>
   </div>
 </div>
 
-<h2>5. The Pipeline</h2>
-<div class="formula">
-  <div class="label">For each frame in the sequence:</div>
-  1. Load image → decode to Float32 linear sRGB pixels<br>
-  2. Apply color correction (8 CIFilter parameters, GPU)<br>
-  3. Apply exposure normalization (EXIF-based EV matching)<br>
-  4. Apply deflicker (Gaussian-smoothed luminance)<br>
-  5. <strong>EMA blend into running composite</strong><br>
-  6. Convert via sRGB LUT → write to video/image
+<!-- ═══════════════ 5. PIPELINE ═══════════════ -->
+<h2>5. The Processing Pipeline</h2>
+<p>Every frame passes through this chain. All pixel math runs in Float32 linear sRGB — no gamma artifacts during blending. The sRGB conversion happens only at the final output via a 4096-entry lookup table.</p>
+
+<div class="viz-panel" id="pipelinePanel">
+  <div class="pipeline-flow" id="pipelineFlow"></div>
+  <div class="insight">
+    All vector operations use Apple's <strong>vDSP/Accelerate</strong> framework for SIMD-optimized batch processing. Color corrections run on GPU via <strong>CIFilter</strong>. The entire pipeline avoids 8-bit bottlenecks.
+  </div>
 </div>
 
-<div class="insight">
-  The entire pixel pipeline runs in <strong>Float32 linear light</strong> — no gamma curve artifacts during blending. The sRGB conversion happens only at the final output stage via a 4096-entry lookup table. All vector math uses Apple's <strong>vDSP/Accelerate</strong> framework for SIMD-optimized batch operations.
+<!-- ═══════════════ 6. KEYFRAME TRAIL ═══════════════ -->
+<h2>6. Keyframed Trail</h2>
+<p>In v1.1, trail length can change over the sequence via keyframes with easing. Set short trails for crisp sections, long trails for ghostly passages, and let the easing curve handle the transition.</p>
+
+<div class="viz-panel">
+  <div class="control-row">
+    <label>Start Trail</label>
+    <input type="range" id="kfStart" min="2" max="200" value="5">
+    <span class="value" id="kfStartVal">5</span>
+  </div>
+  <div class="control-row">
+    <label>End Trail</label>
+    <input type="range" id="kfEnd" min="2" max="200" value="120">
+    <span class="value" id="kfEndVal">120</span>
+  </div>
+  <div class="control-row">
+    <label>Easing</label>
+    <select id="kfEasing">
+      <option value="linear">Linear</option>
+      <option value="easeIn">Ease In (t²)</option>
+      <option value="easeOut" selected>Ease Out (1-(1-t)²)</option>
+      <option value="easeInOut">Ease In-Out</option>
+    </select>
+  </div>
+  <canvas id="kfCanvas" height="280"></canvas>
+  <div class="insight" id="kfInsight"></div>
+</div>
+
+<!-- ═══════════════ 7. DEFLICKER ═══════════════ -->
+<h2>7. Deflicker</h2>
+<p>Time-lapses often have per-frame brightness jitter from aperture/shutter inconsistency. Cyril measures each frame's luminance (Rec.709, trimmed mean of 10th-90th percentile), then Gaussian-smooths the luminance curve and applies corrections. Corrections are soft-clamped to ±2 stops via log-space tanh compression.</p>
+
+<div class="viz-panel">
+  <div class="control-row">
+    <label>Flicker Amount</label>
+    <input type="range" id="flickerAmt" min="0" max="100" value="40">
+    <span class="value" id="flickerAmtVal">40%</span>
+  </div>
+  <div class="control-row">
+    <label>Smoothing Radius</label>
+    <input type="range" id="flickerRadius" min="3" max="40" value="12">
+    <span class="value" id="flickerRadiusVal">12</span>
+  </div>
+  <canvas id="flickerCanvas" height="260"></canvas>
+</div>
+
+<!-- ═══════════════ 8. INTERACTIVE BLEND ═══════════════ -->
+<h2>8. Interactive Blend</h2>
+<p>Pick three colors. Watch them accumulate through the EMA as if they were consecutive frames repeated in a loop.</p>
+
+<div class="viz-panel">
+  <div class="control-row">
+    <label>Trail Length</label>
+    <input type="range" id="blendTrail" min="2" max="60" value="10">
+    <span class="value" id="blendTrailVal">10</span>
+  </div>
+  <div class="blend-grid">
+    <div>
+      <div class="section-label">Input Colors</div>
+      <div style="display:flex;gap:8px;">
+        <input type="color" id="blendColor1" value="#ff4444" style="width:48px;height:36px;border:none;border-radius:6px;cursor:pointer;">
+        <input type="color" id="blendColor2" value="#4488ff" style="width:48px;height:36px;border:none;border-radius:6px;cursor:pointer;">
+        <input type="color" id="blendColor3" value="#44dd66" style="width:48px;height:36px;border:none;border-radius:6px;cursor:pointer;">
+      </div>
+    </div>
+    <div>
+      <div class="section-label">EMA Composite</div>
+      <div class="blend-result" id="blendResult">—</div>
+    </div>
+  </div>
+  <canvas id="blendCanvas" height="200"></canvas>
 </div>
 
 <footer>
@@ -322,107 +442,112 @@ function weight(trail) {
   return 1.0 - Math.exp(Math.log(0.10) / t);
 }
 
-function decay(trail, framesAgo) {
-  const w = weight(trail);
-  return Math.pow(1 - w, framesAgo) * w;
+function applyEasing(t, type) {
+  switch (type) {
+    case 'easeIn': return t * t;
+    case 'easeOut': return 1 - (1 - t) * (1 - t);
+    case 'easeInOut': return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+    default: return t;
+  }
 }
 
 // ═══════════════ COLORS ═══════════════
 const palette = [
-  '#6a9a8a','#8ab4a6','#4e7e6e','#3d6b5c','#9cc4b4',
-  '#5a8a7a','#7aaa9a','#2d5b4c','#aad4c4','#4a7868',
-  '#6090a0','#80b0c0','#50808e','#3a6a78','#90c0d0',
-  '#a07090','#c090b0','#805070','#6a4060','#d0a0c0',
-  '#a09060','#c0b080','#807040','#6a5a30','#d0c090',
-  '#a06060','#c08080','#804040','#6a3030','#d09090',
-  '#6080a0','#80a0c0','#406080','#304a6a','#90b0d0',
-  '#80a060','#a0c080','#608040','#4a6a30','#b0d090',
-  '#9080a0','#b0a0c0','#706080','#5a4a6a','#c0b0d0',
-  '#a09080','#c0b0a0','#807060','#6a5a4a','#d0c0b0'
+  '#6a9a8a','#d4956b','#7b8ec9','#c97b8e','#8ec97b',
+  '#c9b87b','#7bc9c0','#9a7bc9','#c97b7b','#7bc98e',
+  '#8ab4a6','#d4a87b','#8b9ed9','#d98bae','#9ed98b',
+  '#d9c88b','#8bd9d0','#aa8bd9','#d98b8b','#8bd99e',
+  '#5a8a7a','#c4855b','#6b7eb9','#b96b7e','#7eb96b',
+  '#b9a86b','#6bb9b0','#8a6bb9','#b96b6b','#6bb97e',
+  '#4e7e6e','#b4754b','#5b6ea9','#a95b6e','#6ea95b',
+  '#a9985b','#5ba9a0','#7a5ba9','#a95b5b','#5ba96e'
 ];
-
 function frameColor(i) { return palette[i % palette.length]; }
 
+// ═══════════════ INTERSECTION OBSERVER ═══════════════
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting) e.target.classList.add('visible');
+  });
+}, { threshold: 0.1 });
+
+document.querySelectorAll('h2, .viz-panel').forEach(el => observer.observe(el));
+
+// ═══════════════ UTILITY ═══════════════
+function setupCanvas(canvas, height) {
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.getBoundingClientRect();
+  canvas.width = rect.width * dpr;
+  canvas.height = height * dpr;
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+  return { ctx, W: rect.width, H: height };
+}
+
 // ═══════════════ 1. DECAY CURVE ═══════════════
-const decayCanvas = document.getElementById('decayCanvas');
-const decayCtx = decayCanvas.getContext('2d');
 const trailSlider = document.getElementById('trailSlider');
 const trailValue = document.getElementById('trailValue');
 const decayInsight = document.getElementById('decayInsight');
 
 function drawDecay() {
-  const dpr = window.devicePixelRatio || 1;
-  const rect = decayCanvas.getBoundingClientRect();
-  decayCanvas.width = rect.width * dpr;
-  decayCanvas.height = 240 * dpr;
-  const ctx = decayCtx;
-  ctx.scale(dpr, dpr);
-  const W = rect.width, H = 240;
-
+  const { ctx, W, H } = setupCanvas(document.getElementById('decayCanvas'), 240);
   const trail = parseInt(trailSlider.value);
   const w = weight(trail);
   trailValue.textContent = trail;
 
-  ctx.clearRect(0, 0, W, H);
-
   const pad = { l: 50, r: 20, t: 20, b: 40 };
-  const gW = W - pad.l - pad.r;
-  const gH = H - pad.t - pad.b;
+  const gW = W - pad.l - pad.r, gH = H - pad.t - pad.b;
 
   // Grid
-  ctx.strokeStyle = '#222';
-  ctx.lineWidth = 1;
+  ctx.strokeStyle = '#222'; ctx.lineWidth = 1;
   for (let i = 0; i <= 10; i++) {
     const y = pad.t + gH * (1 - i / 10);
     ctx.beginPath(); ctx.moveTo(pad.l, y); ctx.lineTo(pad.l + gW, y); ctx.stroke();
   }
 
-  // Axes labels
-  ctx.fillStyle = '#555';
-  ctx.font = '11px SF Mono, monospace';
-  ctx.textAlign = 'right';
+  // Axes
+  ctx.fillStyle = '#555'; ctx.font = '11px SF Mono, monospace'; ctx.textAlign = 'right';
   for (let i = 0; i <= 10; i += 2) {
-    const y = pad.t + gH * (1 - i / 10);
-    ctx.fillText((i * 10) + '%', pad.l - 8, y + 4);
+    ctx.fillText((i * 10) + '%', pad.l - 8, pad.t + gH * (1 - i / 10) + 4);
   }
-  ctx.textAlign = 'center';
   const maxFrames = Math.min(trail * 4, 200);
+  ctx.textAlign = 'center';
   for (let i = 0; i <= maxFrames; i += Math.max(1, Math.floor(maxFrames / 8))) {
-    const x = pad.l + (i / maxFrames) * gW;
-    ctx.fillText(i, x, H - 8);
+    ctx.fillText(i, pad.l + (i / maxFrames) * gW, H - 8);
   }
-  ctx.fillText('frames ago →', pad.l + gW / 2, H - 0);
+  ctx.fillText('frames ago', pad.l + gW / 2, H);
+
+  // Filled area
+  ctx.beginPath();
+  for (let i = 0; i <= maxFrames; i++) {
+    const c = Math.pow(1 - w, i) * w;
+    const x = pad.l + (i / maxFrames) * gW;
+    const y = pad.t + gH * (1 - c / w);
+    if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+  }
+  ctx.lineTo(pad.l + gW, pad.t + gH);
+  ctx.lineTo(pad.l, pad.t + gH);
+  ctx.closePath();
+  ctx.fillStyle = 'rgba(106, 154, 138, 0.12)';
+  ctx.fill();
 
   // Curve
-  ctx.beginPath();
-  ctx.strokeStyle = '#6a9a8a';
-  ctx.lineWidth = 2.5;
+  ctx.beginPath(); ctx.strokeStyle = '#6a9a8a'; ctx.lineWidth = 2.5;
   for (let i = 0; i <= maxFrames; i++) {
-    const contribution = Math.pow(1 - w, i) * w;
+    const c = Math.pow(1 - w, i) * w;
     const x = pad.l + (i / maxFrames) * gW;
-    const y = pad.t + gH * (1 - contribution / w);
+    const y = pad.t + gH * (1 - c / w);
     if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
   }
   ctx.stroke();
 
-  // Fill under curve
-  ctx.lineTo(pad.l + gW, pad.t + gH);
-  ctx.lineTo(pad.l, pad.t + gH);
-  ctx.closePath();
-  ctx.fillStyle = 'rgba(106, 154, 138, 0.1)';
-  ctx.fill();
-
-  // 10% line
-  const tenPctY = pad.t + gH * (1 - 0.1 * w / w);
-  // Actually let's show where 10% of max weight is
+  // 10% threshold
   const tenY = pad.t + gH * 0.9;
-  ctx.strokeStyle = 'rgba(255,100,100,0.3)';
-  ctx.lineWidth = 1;
+  ctx.strokeStyle = 'rgba(255,100,100,0.3)'; ctx.lineWidth = 1;
   ctx.setLineDash([4, 4]);
   ctx.beginPath(); ctx.moveTo(pad.l, tenY); ctx.lineTo(pad.l + gW, tenY); ctx.stroke();
   ctx.setLineDash([]);
-  ctx.fillStyle = '#844';
-  ctx.textAlign = 'left';
+  ctx.fillStyle = '#844'; ctx.textAlign = 'left';
   ctx.fillText('10% threshold', pad.l + 4, tenY - 6);
 
   // Trail marker
@@ -431,278 +556,618 @@ function drawDecay() {
   ctx.setLineDash([4, 4]);
   ctx.beginPath(); ctx.moveTo(trailX, pad.t); ctx.lineTo(trailX, pad.t + gH); ctx.stroke();
   ctx.setLineDash([]);
-  ctx.fillStyle = '#a84';
-  ctx.textAlign = 'center';
+  ctx.fillStyle = '#a84'; ctx.textAlign = 'center';
   ctx.fillText('trail=' + trail, trailX, pad.t - 4);
 
-  // Insight
   const wPct = (w * 100).toFixed(1);
-  const fadeFrames = Math.ceil(trail * 2);
-  decayInsight.innerHTML = `At trail length <strong>${trail}</strong>, each frame's weight is <strong>${wPct}%</strong>. A frame fades to 10% contribution after ${trail} frames and to 1% after ~${fadeFrames}.`;
+  decayInsight.innerHTML = `At trail <strong>${trail}</strong>, frame weight is <strong>${wPct}%</strong>. Decays to 10% after ${trail} frames, to 1% after ~${Math.ceil(trail * 2)}.`;
 }
 
 trailSlider.addEventListener('input', drawDecay);
 drawDecay();
 
-// ═══════════════ 2. STACK ═══════════════
+// ═══════════════ 2. WATERFALL ═══════════════
 const stackTrail = document.getElementById('stackTrail');
 const stackTrailValue = document.getElementById('stackTrailValue');
-const stackBar = document.getElementById('stackBar');
-const stackViz = document.getElementById('stackViz');
 
-function drawStack() {
+function drawWaterfall() {
+  const { ctx, W, H } = setupCanvas(document.getElementById('waterfallCanvas'), 320);
   const trail = parseInt(stackTrail.value);
   const w = weight(trail);
   stackTrailValue.textContent = trail;
 
-  const numLayers = Math.min(trail * 2, 30);
-  const contributions = [];
-  let total = 0;
-  for (let i = 0; i < numLayers; i++) {
-    const c = Math.pow(1 - w, i) * w;
-    contributions.push(c);
-    total += c;
-  }
-  const remainder = 1 - total;
+  const pad = { l: 60, r: 20, t: 20, b: 30 };
+  const gW = W - pad.l - pad.r, gH = H - pad.t - pad.b;
+  const numBars = Math.min(Math.max(trail * 2, 10), 40);
 
-  // Bar
-  let barHTML = '';
-  contributions.forEach((c, i) => {
-    const pct = (c / 1) * 100;
-    if (pct > 0.5) {
-      barHTML += `<div class="result-segment" style="width:${pct}%;background:${frameColor(i)};">${pct > 3 ? (c*100).toFixed(1)+'%' : ''}</div>`;
+  // Compute contributions
+  const contribs = [];
+  for (let i = 0; i < numBars; i++) contribs.push(Math.pow(1 - w, i) * w);
+
+  const maxC = contribs[0];
+
+  // Draw horizontal bars (newest at top)
+  const barH = Math.min(gH / numBars - 2, 20);
+  const gap = (gH - barH * numBars) / Math.max(numBars - 1, 1);
+
+  for (let i = 0; i < numBars; i++) {
+    const y = pad.t + i * (barH + gap);
+    const barW = (contribs[i] / maxC) * gW;
+
+    // Bar with glow
+    ctx.shadowColor = frameColor(i);
+    ctx.shadowBlur = contribs[i] / maxC > 0.3 ? 8 : 0;
+    ctx.fillStyle = frameColor(i);
+    ctx.globalAlpha = 0.3 + 0.7 * (contribs[i] / maxC);
+    ctx.beginPath();
+    ctx.roundRect(pad.l, y, barW, barH, 3);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+    ctx.globalAlpha = 1;
+
+    // Label
+    ctx.fillStyle = '#555';
+    ctx.font = '10px SF Mono, monospace';
+    ctx.textAlign = 'right';
+    ctx.fillText(`-${i}`, pad.l - 8, y + barH / 2 + 3);
+
+    // Percentage
+    if (barW > 40) {
+      ctx.fillStyle = 'rgba(255,255,255,0.7)';
+      ctx.textAlign = 'left';
+      ctx.fillText((contribs[i] * 100).toFixed(1) + '%', pad.l + barW + 6, y + barH / 2 + 3);
     }
-  });
-  if (remainder > 0.005) {
-    barHTML += `<div class="result-segment" style="width:${remainder*100}%;background:#222;">…</div>`;
   }
-  stackBar.innerHTML = barHTML;
 
-  // Stack layers
-  let vizHTML = '';
-  const maxLayers = Math.min(numLayers, 16);
-  for (let i = 0; i < maxLayers; i++) {
-    const c = contributions[i];
-    const opacity = Math.max(0.15, c / contributions[0]);
-    const width = 70 + (1 - i / maxLayers) * 25;
-    const y = 10 + i * (290 / maxLayers);
-    vizHTML += `<div class="stack-layer" style="
-      top:${y}px;
-      width:${width}%;
-      height:${Math.max(16, 280/maxLayers - 4)}px;
-      background:${frameColor(i)};
-      opacity:${opacity};
-    ">Frame -${i}: ${(c*100).toFixed(1)}%</div>`;
-  }
-  stackViz.innerHTML = vizHTML;
+  // Axis label
+  ctx.fillStyle = '#444'; ctx.font = '10px -apple-system, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('frame age (newest → oldest)', pad.l - 30, H - 4);
 }
 
-stackTrail.addEventListener('input', drawStack);
-drawStack();
+stackTrail.addEventListener('input', drawWaterfall);
+drawWaterfall();
 
 // ═══════════════ 3. ACCUMULATION SIM ═══════════════
 const simTrail = document.getElementById('simTrail');
 const simTrailValue = document.getElementById('simTrailValue');
 const simFrame = document.getElementById('simFrame');
 const simFrameValue = document.getElementById('simFrameValue');
-const simCanvas = document.getElementById('simCanvas');
-const simCtx = simCanvas.getContext('2d');
-const simBar = document.getElementById('simBar');
 const simPlay = document.getElementById('simPlay');
 const simReset = document.getElementById('simReset');
-
-let simPlaying = false;
-let simInterval = null;
+let simPlaying = false, simInterval = null;
 
 function drawSim() {
-  const dpr = window.devicePixelRatio || 1;
-  const rect = simCanvas.getBoundingClientRect();
-  simCanvas.width = rect.width * dpr;
-  simCanvas.height = 300 * dpr;
-  const ctx = simCtx;
-  ctx.scale(dpr, dpr);
-  const W = rect.width, H = 300;
-
+  const { ctx, W, H } = setupCanvas(document.getElementById('simCanvas'), 280);
   const trail = parseInt(simTrail.value);
   const currentFrame = parseInt(simFrame.value);
   const w = weight(trail);
-  const totalFrames = 40;
+  const totalFrames = 60;
 
   simTrailValue.textContent = trail;
   simFrameValue.textContent = `${currentFrame} / ${totalFrames}`;
 
-  ctx.clearRect(0, 0, W, H);
+  const pad = { l: 8, r: 8, t: 8, b: 8 };
+  const gW = W - pad.l - pad.r, gH = H - pad.t - pad.b;
 
-  const pad = { l: 40, r: 20, t: 30, b: 30 };
-  const gW = W - pad.l - pad.r;
-  const gH = H - pad.t - pad.b;
-
-  // For each frame up to currentFrame, calculate its contribution at currentFrame
-  const contributions = [];
-  for (let f = 0; f <= currentFrame; f++) {
-    const age = currentFrame - f;
-    const c = Math.pow(1 - w, age) * w;
-    contributions.push({ frame: f, contribution: c, age: age });
+  // Generate a synthetic "signal" — hue shifts over time
+  function frameHSL(f) {
+    const h = (f * 17 + 120) % 360;
+    return `hsl(${h}, 55%, 50%)`;
   }
 
-  // Normalize to show relative contributions
-  const totalC = contributions.reduce((s, c) => s + c.contribution, 0);
-
-  // Draw stacked area chart showing how contributions evolve over time
-  const barWidth = gW / totalFrames;
-
-  // For each time step, show the composition
+  // Draw composite color strip for each frame position
+  const stripW = gW / totalFrames;
   for (let t = 0; t <= currentFrame; t++) {
-    const x = pad.l + t * barWidth;
-    let y = pad.t + gH;
+    const x = pad.l + t * stripW;
 
-    // Calculate all frame contributions at time t
-    const contribs = [];
+    // Compute composite color at time t via EMA
+    let r = 0, g = 0, b = 0;
+    let totalW = 0;
     for (let f = 0; f <= t; f++) {
       const age = t - f;
       const c = Math.pow(1 - w, age) * w;
-      contribs.push({ frame: f, contribution: c });
+      const h = (f * 17 + 120) % 360;
+      const [fr, fg, fb] = hslToRgb(h / 360, 0.55, 0.5);
+      r += fr * c; g += fg * c; b += fb * c;
+      totalW += c;
     }
-    const sum = contribs.reduce((s, c) => s + c.contribution, 0);
+    if (totalW > 0) { r /= totalW; g /= totalW; b /= totalW; }
 
-    // Draw stacked bar
-    contribs.forEach(c => {
-      const h = (c.contribution / sum) * gH;
-      ctx.fillStyle = frameColor(c.frame);
-      ctx.globalAlpha = t === currentFrame ? 1 : 0.4;
-      ctx.fillRect(x, y - h, barWidth - 1, h);
-      y -= h;
-    });
+    // Draw the composite as a vertical column
+    ctx.fillStyle = `rgb(${Math.round(r*255)},${Math.round(g*255)},${Math.round(b*255)})`;
+    const alpha = t === currentFrame ? 1 : 0.6 + 0.4 * (t / currentFrame);
+    ctx.globalAlpha = alpha;
+    ctx.fillRect(x, pad.t, stripW - 1, gH * 0.6);
+
+    // Draw the input frame color below
+    ctx.fillStyle = frameHSL(t);
+    ctx.globalAlpha = t === currentFrame ? 1 : 0.3;
+    ctx.fillRect(x, pad.t + gH * 0.7, stripW - 1, gH * 0.25);
   }
   ctx.globalAlpha = 1;
 
-  // Current frame marker
-  const cx = pad.l + currentFrame * barWidth + barWidth / 2;
-  ctx.strokeStyle = '#fff';
-  ctx.lineWidth = 1;
-  ctx.setLineDash([2, 2]);
-  ctx.beginPath(); ctx.moveTo(cx, pad.t); ctx.lineTo(cx, pad.t + gH); ctx.stroke();
-  ctx.setLineDash([]);
-
-  // Frame numbers on x axis
-  ctx.fillStyle = '#555';
-  ctx.font = '10px SF Mono, monospace';
-  ctx.textAlign = 'center';
-  for (let i = 0; i < totalFrames; i += Math.max(1, Math.floor(totalFrames / 20))) {
-    ctx.fillText(i, pad.l + i * barWidth + barWidth / 2, H - 8);
-  }
-
-  // Y axis
-  ctx.textAlign = 'right';
-  ctx.fillText('100%', pad.l - 6, pad.t + 4);
-  ctx.fillText('0%', pad.l - 6, pad.t + gH + 4);
-
   // Labels
-  ctx.fillStyle = '#666';
-  ctx.textAlign = 'center';
-  ctx.fillText('frame number →', pad.l + gW / 2, H - 0);
-  ctx.save();
-  ctx.translate(12, pad.t + gH / 2);
-  ctx.rotate(-Math.PI / 2);
-  ctx.fillText('contribution', 0, 0);
-  ctx.restore();
+  ctx.fillStyle = '#555'; ctx.font = '10px -apple-system, sans-serif';
+  ctx.textAlign = 'left';
+  ctx.fillText('composite', pad.l, pad.t + gH * 0.6 + 14);
+  ctx.fillText('input frames', pad.l, pad.t + gH * 0.7 - 4);
 
-  // Bottom bar: current composition
-  let barHTML = '';
-  if (contributions.length > 0) {
-    const sorted = [...contributions].sort((a, b) => b.contribution - a.contribution);
-    sorted.forEach(c => {
-      const pct = (c.contribution / totalC) * 100;
-      if (pct > 0.3) {
-        barHTML += `<div class="result-segment" style="width:${pct}%;background:${frameColor(c.frame)};">${pct > 4 ? 'f' + c.frame : ''}</div>`;
-      }
-    });
+  // Playhead
+  if (currentFrame > 0) {
+    const px = pad.l + currentFrame * stripW + stripW / 2;
+    ctx.strokeStyle = '#fff'; ctx.lineWidth = 1;
+    ctx.setLineDash([2, 2]);
+    ctx.beginPath(); ctx.moveTo(px, pad.t); ctx.lineTo(px, pad.t + gH); ctx.stroke();
+    ctx.setLineDash([]);
   }
-  simBar.innerHTML = barHTML;
 }
 
-simTrail.addEventListener('input', () => { drawSim(); });
+function hslToRgb(h, s, l) {
+  let r, g, b;
+  if (s === 0) { r = g = b = l; }
+  else {
+    const hue2rgb = (p, q, t) => {
+      if (t < 0) t += 1; if (t > 1) t -= 1;
+      if (t < 1/6) return p + (q - p) * 6 * t;
+      if (t < 1/2) return q;
+      if (t < 2/3) return p + (q - p) * (2/3 - t) * 6;
+      return p;
+    };
+    const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+    const p = 2 * l - q;
+    r = hue2rgb(p, q, h + 1/3);
+    g = hue2rgb(p, q, h);
+    b = hue2rgb(p, q, h - 1/3);
+  }
+  return [r, g, b];
+}
+
+simTrail.addEventListener('input', drawSim);
 simFrame.addEventListener('input', drawSim);
 
 simPlay.addEventListener('click', () => {
   if (simPlaying) {
-    clearInterval(simInterval);
-    simPlaying = false;
-    simPlay.textContent = '▶ Play';
-    return;
+    clearInterval(simInterval); simPlaying = false;
+    simPlay.innerHTML = '&#9654; Play'; return;
   }
-  simPlaying = true;
-  simPlay.textContent = '⏸ Pause';
+  simPlaying = true; simPlay.innerHTML = '&#9646;&#9646; Pause';
   simInterval = setInterval(() => {
     let v = parseInt(simFrame.value);
-    if (v >= 39) { clearInterval(simInterval); simPlaying = false; simPlay.textContent = '▶ Play'; return; }
-    simFrame.value = v + 1;
-    drawSim();
-  }, 200);
+    if (v >= 59) { clearInterval(simInterval); simPlaying = false; simPlay.innerHTML = '&#9654; Play'; return; }
+    simFrame.value = v + 1; drawSim();
+  }, 120);
 });
 
 simReset.addEventListener('click', () => {
-  clearInterval(simInterval);
-  simPlaying = false;
-  simPlay.textContent = '▶ Play';
-  simFrame.value = 0;
-  drawSim();
+  clearInterval(simInterval); simPlaying = false;
+  simPlay.innerHTML = '&#9654; Play';
+  simFrame.value = 0; drawSim();
 });
 
 drawSim();
 
-// ═══════════════ 4. COMPARISON ═══════════════
-function drawComparison(canvasId, trail) {
-  const canvas = document.getElementById(canvasId);
-  const ctx = canvas.getContext('2d');
-  const dpr = window.devicePixelRatio || 1;
-  const rect = canvas.getBoundingClientRect();
-  canvas.width = rect.width * dpr;
-  canvas.height = 180 * dpr;
-  ctx.scale(dpr, dpr);
-  const W = rect.width, H = 180;
+// ═══════════════ 4. COMPARISON (ANIMATED) ═══════════════
+let compareFrame = 0, compareAnimating = false, compareInterval = null;
 
+function drawComparison(canvasId, trail, frame) {
+  const { ctx, W, H } = setupCanvas(document.getElementById(canvasId), 200);
   const w = weight(trail);
-  const pad = { l: 8, r: 8, t: 8, b: 8 };
-  const gW = W - pad.l - pad.r;
-  const gH = H - pad.t - pad.b;
-  const totalFrames = 40;
-  const barWidth = gW / totalFrames;
+  const totalFrames = 60;
+  const pad = { l: 4, r: 4, t: 4, b: 20 };
+  const gW = W - pad.l - pad.r, gH = H - pad.t - pad.b;
+  const stripW = gW / totalFrames;
 
-  ctx.clearRect(0, 0, W, H);
-
-  // Show composition at the last frame
   for (let t = 0; t < totalFrames; t++) {
-    const x = pad.l + t * barWidth;
-    let y = pad.t + gH;
-
-    const contribs = [];
+    const x = pad.l + t * stripW;
+    let r = 0, g = 0, b = 0, totalW = 0;
     for (let f = 0; f <= t; f++) {
       const age = t - f;
       const c = Math.pow(1 - w, age) * w;
-      contribs.push({ frame: f, contribution: c });
+      const h = (f * 17 + 120) % 360;
+      const [fr, fg, fb] = hslToRgb(h / 360, 0.55, 0.5);
+      r += fr * c; g += fg * c; b += fb * c; totalW += c;
     }
-    const sum = contribs.reduce((s, c) => s + c.contribution, 0);
+    if (totalW > 0) { r /= totalW; g /= totalW; b /= totalW; }
 
-    contribs.forEach(c => {
-      const h = (c.contribution / sum) * gH;
-      ctx.fillStyle = frameColor(c.frame);
-      ctx.fillRect(x, y - h, barWidth - 1, h);
-      y -= h;
-    });
+    ctx.globalAlpha = t <= frame ? 1 : 0.15;
+    ctx.fillStyle = `rgb(${Math.round(r*255)},${Math.round(g*255)},${Math.round(b*255)})`;
+    ctx.fillRect(x, pad.t, stripW - 1, gH);
+  }
+  ctx.globalAlpha = 1;
+
+  // Playhead
+  if (frame < totalFrames) {
+    const px = pad.l + frame * stripW + stripW / 2;
+    ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(px, pad.t); ctx.lineTo(px, pad.t + gH); ctx.stroke();
+    ctx.fillStyle = '#fff'; ctx.font = '9px SF Mono, monospace'; ctx.textAlign = 'center';
+    ctx.fillText(frame, px, H - 4);
   }
 }
 
-drawComparison('compareShort', 5);
-drawComparison('compareLong', 80);
+function animateComparison() {
+  drawComparison('compareShort', 5, compareFrame);
+  drawComparison('compareLong', 80, compareFrame);
+}
 
-// Resize handler
+document.getElementById('comparePlay').addEventListener('click', () => {
+  if (compareAnimating) {
+    clearInterval(compareInterval); compareAnimating = false;
+    document.getElementById('comparePlay').innerHTML = '&#9654; Animate'; return;
+  }
+  compareFrame = 0; compareAnimating = true;
+  document.getElementById('comparePlay').innerHTML = '&#9646;&#9646; Stop';
+  compareInterval = setInterval(() => {
+    compareFrame++;
+    if (compareFrame >= 59) { clearInterval(compareInterval); compareAnimating = false; document.getElementById('comparePlay').innerHTML = '&#9654; Animate'; }
+    animateComparison();
+  }, 100);
+});
+
+animateComparison();
+
+// ═══════════════ 5. PIPELINE ═══════════════
+const pipelineSteps = [
+  { label: 'Load Image', detail: 'CIImage → Float32' },
+  { label: 'Exposure Adjust', detail: 'CIExposureAdjust' },
+  { label: 'Temperature & Tint', detail: 'CITemperatureAndTint' },
+  { label: 'Contrast (luma-preserving)', detail: 'luminosity blend' },
+  { label: 'Saturation & Vibrance', detail: 'CIColorControls' },
+  { label: 'Highlights & Shadows', detail: 'CIHighlightShadowAdjust' },
+  { label: 'Scale (if needed)', detail: 'CGAffineTransform' },
+  { label: 'Render to Float32 RGBA', detail: 'CIContext.render' },
+  { label: 'Exposure Norm / Deflicker', detail: 'vDSP multiply' },
+  { label: 'EMA Composite', detail: 'vDSP blend' },
+  { label: 'Brightness & Clamp', detail: 'vDSP_vsmul + vclip' },
+  { label: 'sRGB LUT → Video', detail: '4096-entry table' },
+];
+
+const pipelineFlow = document.getElementById('pipelineFlow');
+pipelineSteps.forEach((step, i) => {
+  if (i > 0) {
+    const arrow = document.createElement('div');
+    arrow.className = 'pipe-arrow';
+    arrow.textContent = '↓';
+    pipelineFlow.appendChild(arrow);
+  }
+  const node = document.createElement('div');
+  node.className = 'pipe-node';
+  node.dataset.index = i;
+  node.innerHTML = `<div class="num">${i + 1}</div><div class="pipe-label">${step.label}</div><div class="pipe-detail">${step.detail}</div>`;
+  pipelineFlow.appendChild(node);
+});
+
+// Animate pipeline
+let pipeStep = -1, pipeInterval = null;
+function animatePipeline() {
+  const nodes = document.querySelectorAll('.pipe-node');
+  pipeStep = (pipeStep + 1) % nodes.length;
+  nodes.forEach((n, i) => n.classList.toggle('active', i === pipeStep));
+}
+// Start when visible
+const pipeObs = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting && !pipeInterval) {
+      pipeInterval = setInterval(animatePipeline, 800);
+    } else if (!e.isIntersecting && pipeInterval) {
+      clearInterval(pipeInterval); pipeInterval = null;
+    }
+  });
+}, { threshold: 0.3 });
+pipeObs.observe(document.getElementById('pipelinePanel'));
+
+// ═══════════════ 6. KEYFRAME TRAIL ═══════════════
+const kfStart = document.getElementById('kfStart');
+const kfEnd = document.getElementById('kfEnd');
+const kfEasing = document.getElementById('kfEasing');
+const kfInsight = document.getElementById('kfInsight');
+
+let kfPlayhead = 0, kfAnimating = false;
+
+function drawKeyframe() {
+  const { ctx, W, H } = setupCanvas(document.getElementById('kfCanvas'), 280);
+  const startTrail = parseInt(kfStart.value);
+  const endTrail = parseInt(kfEnd.value);
+  const easing = kfEasing.value;
+
+  document.getElementById('kfStartVal').textContent = startTrail;
+  document.getElementById('kfEndVal').textContent = endTrail;
+
+  const pad = { l: 50, r: 20, t: 30, b: 40 };
+  const gW = W - pad.l - pad.r, gH = H - pad.t - pad.b;
+  const numPoints = 200;
+
+  // Trail curve
+  ctx.strokeStyle = '#333'; ctx.lineWidth = 1;
+  for (let i = 0; i <= 4; i++) {
+    const y = pad.t + gH * i / 4;
+    ctx.beginPath(); ctx.moveTo(pad.l, y); ctx.lineTo(pad.l + gW, y); ctx.stroke();
+  }
+
+  // Y axis labels
+  ctx.fillStyle = '#555'; ctx.font = '10px SF Mono, monospace'; ctx.textAlign = 'right';
+  const minT = Math.min(startTrail, endTrail);
+  const maxT = Math.max(startTrail, endTrail);
+  for (let i = 0; i <= 4; i++) {
+    const val = maxT - (maxT - minT) * (i / 4);
+    const y = pad.t + gH * i / 4;
+    ctx.fillText(Math.round(val), pad.l - 8, y + 4);
+  }
+
+  // X axis
+  ctx.textAlign = 'center';
+  ctx.fillText('0%', pad.l, H - 8);
+  ctx.fillText('25%', pad.l + gW * 0.25, H - 8);
+  ctx.fillText('50%', pad.l + gW * 0.5, H - 8);
+  ctx.fillText('75%', pad.l + gW * 0.75, H - 8);
+  ctx.fillText('100%', pad.l + gW, H - 8);
+  ctx.fillText('sequence position', pad.l + gW / 2, H);
+
+  // Draw linear reference (faint)
+  ctx.strokeStyle = '#2a2a2a'; ctx.lineWidth = 1;
+  ctx.setLineDash([4, 4]);
+  ctx.beginPath();
+  ctx.moveTo(pad.l, pad.t + gH * (1 - (startTrail - minT) / (maxT - minT || 1)));
+  ctx.lineTo(pad.l + gW, pad.t + gH * (1 - (endTrail - minT) / (maxT - minT || 1)));
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Draw eased curve
+  ctx.beginPath(); ctx.strokeStyle = '#6a9a8a'; ctx.lineWidth = 2.5;
+  for (let i = 0; i <= numPoints; i++) {
+    const t = i / numPoints;
+    const eased = applyEasing(t, easing);
+    const trailVal = startTrail + (endTrail - startTrail) * eased;
+    const x = pad.l + t * gW;
+    const y = pad.t + gH * (1 - (trailVal - minT) / (maxT - minT || 1));
+    if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+  }
+  ctx.stroke();
+
+  // Fill under curve
+  const lastEased = applyEasing(1, easing);
+  const lastTrail = startTrail + (endTrail - startTrail) * lastEased;
+  ctx.lineTo(pad.l + gW, pad.t + gH);
+  ctx.lineTo(pad.l, pad.t + gH);
+  ctx.closePath();
+  ctx.fillStyle = 'rgba(106, 154, 138, 0.08)';
+  ctx.fill();
+
+  // Animated playhead
+  const pt = (kfPlayhead % 300) / 300;
+  const pEased = applyEasing(pt, easing);
+  const pTrail = startTrail + (endTrail - startTrail) * pEased;
+  const px = pad.l + pt * gW;
+  const py = pad.t + gH * (1 - (pTrail - minT) / (maxT - minT || 1));
+
+  ctx.beginPath();
+  ctx.arc(px, py, 5, 0, Math.PI * 2);
+  ctx.fillStyle = '#6a9a8a';
+  ctx.fill();
+  ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5;
+  ctx.stroke();
+
+  // Vertical playhead line
+  ctx.strokeStyle = 'rgba(106, 154, 138, 0.3)'; ctx.lineWidth = 1;
+  ctx.setLineDash([3, 3]);
+  ctx.beginPath(); ctx.moveTo(px, pad.t); ctx.lineTo(px, pad.t + gH); ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Value readout
+  ctx.fillStyle = '#e0e0e0'; ctx.font = '11px SF Mono, monospace'; ctx.textAlign = 'left';
+  ctx.fillText(`trail = ${Math.round(pTrail)}`, px + 10, py - 8);
+
+  // Weight readout
+  const currentW = weight(Math.round(pTrail));
+  kfInsight.innerHTML = `At position <strong>${(pt * 100).toFixed(0)}%</strong>, trail = <strong>${Math.round(pTrail)}</strong>, frame weight = <strong>${(currentW * 100).toFixed(1)}%</strong>. Easing: ${easing}.`;
+}
+
+function animateKf() {
+  kfPlayhead++;
+  drawKeyframe();
+  requestAnimationFrame(animateKf);
+}
+
+kfStart.addEventListener('input', drawKeyframe);
+kfEnd.addEventListener('input', drawKeyframe);
+kfEasing.addEventListener('change', drawKeyframe);
+animateKf();
+
+// ═══════════════ 7. DEFLICKER ═══════════════
+const flickerAmt = document.getElementById('flickerAmt');
+const flickerRadius = document.getElementById('flickerRadius');
+
+// Pre-generate a stable flicker pattern
+const flickerSeed = [];
+for (let i = 0; i < 120; i++) flickerSeed.push(Math.sin(i * 0.7) * 0.3 + Math.sin(i * 2.3) * 0.15 + Math.sin(i * 5.1) * 0.08);
+
+function gaussianSmooth(data, radius) {
+  const sigma = radius / 3;
+  const kernel = [];
+  let sum = 0;
+  for (let i = -radius; i <= radius; i++) {
+    const v = Math.exp(-(i * i) / (2 * sigma * sigma));
+    kernel.push(v); sum += v;
+  }
+  kernel.forEach((_, i, a) => a[i] /= sum);
+
+  const result = new Array(data.length);
+  for (let i = 0; i < data.length; i++) {
+    let v = 0;
+    for (let k = -radius; k <= radius; k++) {
+      // Mirror padding
+      let idx = i + k;
+      if (idx < 0) idx = Math.min(data.length - 1, -idx);
+      if (idx >= data.length) idx = Math.max(0, 2 * data.length - 2 - idx);
+      v += data[idx] * kernel[k + radius];
+    }
+    result[i] = v;
+  }
+  return result;
+}
+
+function drawFlicker() {
+  const { ctx, W, H } = setupCanvas(document.getElementById('flickerCanvas'), 260);
+  const amount = parseInt(flickerAmt.value) / 100;
+  const radius = parseInt(flickerRadius.value);
+  document.getElementById('flickerAmtVal').textContent = Math.round(amount * 100) + '%';
+  document.getElementById('flickerRadiusVal').textContent = radius;
+
+  const pad = { l: 50, r: 20, t: 20, b: 40 };
+  const gW = W - pad.l - pad.r, gH = H - pad.t - pad.b;
+  const n = 120;
+
+  // Generate raw luminance with flicker
+  const raw = [];
+  for (let i = 0; i < n; i++) {
+    raw.push(0.5 + flickerSeed[i] * amount);
+  }
+
+  const smoothed = gaussianSmooth(raw, radius);
+
+  // Y range
+  const allVals = [...raw, ...smoothed];
+  const yMin = Math.min(...allVals) - 0.02;
+  const yMax = Math.max(...allVals) + 0.02;
+
+  // Grid
+  ctx.strokeStyle = '#222'; ctx.lineWidth = 1;
+  for (let i = 0; i <= 4; i++) {
+    const y = pad.t + gH * i / 4;
+    ctx.beginPath(); ctx.moveTo(pad.l, y); ctx.lineTo(pad.l + gW, y); ctx.stroke();
+  }
+
+  // Y labels
+  ctx.fillStyle = '#555'; ctx.font = '10px SF Mono, monospace'; ctx.textAlign = 'right';
+  for (let i = 0; i <= 4; i++) {
+    const val = yMax - (yMax - yMin) * (i / 4);
+    ctx.fillText(val.toFixed(2), pad.l - 6, pad.t + gH * i / 4 + 4);
+  }
+
+  // X labels
+  ctx.textAlign = 'center';
+  ctx.fillText('frame', pad.l + gW / 2, H - 4);
+  for (let i = 0; i <= n; i += 20) {
+    ctx.fillText(i, pad.l + (i / n) * gW, H - 16);
+  }
+
+  function toY(v) { return pad.t + gH * (1 - (v - yMin) / (yMax - yMin)); }
+  function toX(i) { return pad.l + (i / (n - 1)) * gW; }
+
+  // Raw luminance (jittery)
+  ctx.beginPath(); ctx.strokeStyle = 'rgba(200, 80, 80, 0.6)'; ctx.lineWidth = 1.5;
+  for (let i = 0; i < n; i++) {
+    const x = toX(i), y = toY(raw[i]);
+    if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+  }
+  ctx.stroke();
+
+  // Smoothed luminance
+  ctx.beginPath(); ctx.strokeStyle = '#6a9a8a'; ctx.lineWidth = 2.5;
+  for (let i = 0; i < n; i++) {
+    const x = toX(i), y = toY(smoothed[i]);
+    if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+  }
+  ctx.stroke();
+
+  // Legend
+  ctx.fillStyle = 'rgba(200, 80, 80, 0.8)';
+  ctx.fillRect(pad.l + 10, pad.t + 6, 16, 3);
+  ctx.fillStyle = '#888'; ctx.font = '10px -apple-system, sans-serif'; ctx.textAlign = 'left';
+  ctx.fillText('raw luminance', pad.l + 32, pad.t + 12);
+
+  ctx.fillStyle = '#6a9a8a';
+  ctx.fillRect(pad.l + 10, pad.t + 22, 16, 3);
+  ctx.fillStyle = '#888';
+  ctx.fillText('Gaussian smoothed (r=' + radius + ')', pad.l + 32, pad.t + 28);
+
+  // Show correction range
+  ctx.fillStyle = '#444'; ctx.font = '9px SF Mono, monospace';
+  const maxCorr = Math.max(...raw.map((v, i) => Math.abs(smoothed[i] / v - 1)));
+  ctx.fillText(`max correction: ${(maxCorr * 100).toFixed(1)}%`, pad.l + gW - 120, pad.t + 12);
+}
+
+flickerAmt.addEventListener('input', drawFlicker);
+flickerRadius.addEventListener('input', drawFlicker);
+drawFlicker();
+
+// ═══════════════ 8. INTERACTIVE BLEND ═══════════════
+const blendTrail = document.getElementById('blendTrail');
+const blendColor1 = document.getElementById('blendColor1');
+const blendColor2 = document.getElementById('blendColor2');
+const blendColor3 = document.getElementById('blendColor3');
+const blendResult = document.getElementById('blendResult');
+
+function hexToRgb(hex) {
+  const r = parseInt(hex.slice(1, 3), 16) / 255;
+  const g = parseInt(hex.slice(3, 5), 16) / 255;
+  const b = parseInt(hex.slice(5, 7), 16) / 255;
+  return [r, g, b];
+}
+
+// sRGB to linear
+function toLinear(c) { return c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4); }
+function toSrgb(c) { return c <= 0.0031308 ? c * 12.92 : 1.055 * Math.pow(c, 1 / 2.4) - 0.055; }
+
+function drawBlend() {
+  const { ctx, W, H } = setupCanvas(document.getElementById('blendCanvas'), 200);
+  const trail = parseInt(blendTrail.value);
+  const w = weight(trail);
+  document.getElementById('blendTrailVal').textContent = trail;
+
+  const colors = [
+    hexToRgb(blendColor1.value),
+    hexToRgb(blendColor2.value),
+    hexToRgb(blendColor3.value),
+  ];
+
+  // Simulate 90 frames of looping 3 colors through EMA in linear space
+  const totalFrames = 90;
+  const history = [];
+  let comp = [0, 0, 0]; // linear
+
+  for (let f = 0; f < totalFrames; f++) {
+    const c = colors[f % 3].map(toLinear);
+    comp = comp.map((v, i) => v * (1 - w) + c[i] * w);
+    history.push(comp.map(toSrgb));
+  }
+
+  const pad = { l: 8, r: 8, t: 8, b: 20 };
+  const gW = W - pad.l - pad.r, gH = H - pad.t - pad.b;
+  const stripW = gW / totalFrames;
+
+  // Draw color evolution
+  for (let f = 0; f < totalFrames; f++) {
+    const [r, g, b] = history[f];
+    ctx.fillStyle = `rgb(${Math.round(r*255)},${Math.round(g*255)},${Math.round(b*255)})`;
+    ctx.fillRect(pad.l + f * stripW, pad.t, stripW, gH * 0.6);
+
+    // Input color below
+    const [ir, ig, ib] = colors[f % 3];
+    ctx.fillStyle = `rgb(${Math.round(ir*255)},${Math.round(ig*255)},${Math.round(ib*255)})`;
+    ctx.fillRect(pad.l + f * stripW, pad.t + gH * 0.7, stripW, gH * 0.25);
+  }
+
+  ctx.fillStyle = '#555'; ctx.font = '9px -apple-system, sans-serif'; ctx.textAlign = 'left';
+  ctx.fillText('EMA composite', pad.l, pad.t + gH * 0.6 + 13);
+  ctx.fillText('input cycle', pad.l, pad.t + gH * 0.7 - 3);
+
+  // Update result swatch
+  const final = history[history.length - 1];
+  const fr = Math.round(final[0] * 255), fg = Math.round(final[1] * 255), fb = Math.round(final[2] * 255);
+  blendResult.style.background = `rgb(${fr},${fg},${fb})`;
+  blendResult.textContent = `rgb(${fr}, ${fg}, ${fb})`;
+}
+
+[blendTrail, blendColor1, blendColor2, blendColor3].forEach(el => el.addEventListener('input', drawBlend));
+drawBlend();
+
+// ═══════════════ RESIZE ═══════════════
 window.addEventListener('resize', () => {
-  drawDecay();
-  drawStack();
-  drawSim();
-  drawComparison('compareShort', 5);
-  drawComparison('compareLong', 80);
+  drawDecay(); drawWaterfall(); drawSim();
+  animateComparison(); drawFlicker(); drawBlend();
+  drawKeyframe();
 });
 </script>
 </body>
