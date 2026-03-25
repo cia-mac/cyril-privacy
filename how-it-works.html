@@ -531,6 +531,12 @@
 </div>
 
 <script>
+// Pin CSS height on all canvases immediately to prevent aspect-ratio distortion
+// before deferred init sets the correct intrinsic dimensions
+document.querySelectorAll('canvas[height]').forEach(c => {
+  c.style.height = c.getAttribute('height') + 'px';
+});
+
 // ══════════════════ MATH ══════════════════
 function W(trail) { return 1 - Math.exp(Math.log(0.1) / Math.max(2, trail)); }
 function ease(t, type) {
@@ -554,6 +560,7 @@ function srgb(c){return c<=.0031308?c*12.92:1.055*c**(1/2.4)-.055;}
 function setup(cv, h) {
   const d=devicePixelRatio||1, r=cv.getBoundingClientRect();
   const w=Math.max(r.width,100);
+  cv.style.height=h+'px';
   cv.width=w*d; cv.height=h*d;
   const c=cv.getContext('2d'); c.setTransform(d,0,0,d,0,0);
   return {c,w,h};
@@ -597,6 +604,7 @@ function createTrailRenderer(canvas, heightPx) {
     d=devicePixelRatio||1;
     const r=canvas.getBoundingClientRect();
     cw=Math.max(r.width,100); ch=heightPx||Math.max(r.height,100);
+    canvas.style.height=ch+'px';
     canvas.width=cw*d; canvas.height=ch*d;
     ctx=canvas.getContext('2d'); ctx.setTransform(d,0,0,d,0,0);
     ctx.fillStyle='#0d0d0d'; ctx.fillRect(0,0,cw,ch);
