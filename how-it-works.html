@@ -559,7 +559,8 @@ function srgb(c){return c<=.0031308?c*12.92:1.055*c**(1/2.4)-.055;}
 // ══════════════════ CANVAS UTIL ══════════════════
 function setup(cv, h) {
   const d=devicePixelRatio||1, r=cv.getBoundingClientRect();
-  const w=Math.max(r.width,100);
+  if(r.width<10) return null; // layout not ready
+  const w=r.width;
   cv.style.height=h+'px';
   cv.width=w*d; cv.height=h*d;
   const c=cv.getContext('2d'); c.setTransform(d,0,0,d,0,0);
@@ -603,7 +604,8 @@ function createTrailRenderer(canvas, heightPx) {
   function init() {
     d=devicePixelRatio||1;
     const r=canvas.getBoundingClientRect();
-    cw=Math.max(r.width,100); ch=heightPx||Math.max(r.height,100);
+    if(r.width<10) return false; // layout not ready
+    cw=r.width; ch=heightPx||r.height||200;
     canvas.style.height=ch+'px';
     canvas.width=cw*d; canvas.height=ch*d;
     ctx=canvas.getContext('2d'); ctx.setTransform(d,0,0,d,0,0);
@@ -669,7 +671,9 @@ const trailValue=document.getElementById('trailValue');
 const decayNote=document.getElementById('decayNote');
 
 function drawDecay(){
-  const{c:ctx,w:cW,h:H}=setup(document.getElementById('decayCanvas'),220);
+  const s=setup(document.getElementById('decayCanvas'),220);
+  if(!s) return;
+  const{c:ctx,w:cW,h:H}=s;
   const trail=+trailSlider.value, w=W(trail);
   trailValue.textContent=trail;
   const p={l:48,r:16,t:16,b:36}, gW=cW-p.l-p.r, gH=H-p.t-p.b;
@@ -722,7 +726,9 @@ const palette=['#6a9a8a','#d4956b','#7b8ec9','#c97b8e','#8ec97b','#c9b87b','#7bc
 function fCol(i){return palette[i%palette.length];}
 
 function drawWf(){
-  const{c:ctx,w:cW,h:H}=setup(document.getElementById('wfCanvas'),300);
+  const s=setup(document.getElementById('wfCanvas'),300);
+  if(!s) return;
+  const{c:ctx,w:cW,h:H}=s;
   const trail=+wfTrail.value, w=W(trail);
   wfTrailVal.textContent=trail;
   const p={l:50,r:16,t:12,b:24}, gW=cW-p.l-p.r, gH=H-p.t-p.b;
@@ -843,7 +849,9 @@ const kfNote=document.getElementById('kfNote');
 let kfT=0,kfRaf;
 
 function drawKf(){
-  const{c:ctx,w:cW,h:H}=setup(document.getElementById('kfCanvas'),260);
+  const _s=setup(document.getElementById('kfCanvas'),260);
+  if(!_s) return;
+  const{c:ctx,w:cW,h:H}=_s;
   const s=+kfS.value,e=+kfE.value,eType=kfEas.value;
   document.getElementById('kfStartVal').textContent=s;
   document.getElementById('kfEndVal').textContent=e;
@@ -916,7 +924,9 @@ function drawFlicker(){
   const smoothed=gauss(raw,rad);
 
   // Chart
-  const{c:ctx,w:cW,h:H}=setup(document.getElementById('fCanvas'),220);
+  const _s1=setup(document.getElementById('fCanvas'),220);
+  if(!_s1) return;
+  const{c:ctx,w:cW,h:H}=_s1;
   const all=[...raw,...smoothed],yMn=Math.min(...all)-.02,yMx=Math.max(...all)+.02;
   const p={l:46,r:16,t:16,b:34},gW=cW-p.l-p.r,gH=H-p.t-p.b;
   const toY=v=>p.t+gH*(1-(v-yMn)/(yMx-yMn)),toX=i=>p.l+(i/(n-1))*gW;
@@ -943,7 +953,9 @@ function drawFlicker(){
   ctx.fillStyle='#666';ctx.fillText('smoothed (r='+rad+')',p.l+26,p.t+22);
 
   // Frame strip
-  const{c:sCtx,w:sW,h:sH}=setup(document.getElementById('fStrip'),80);
+  const _s2=setup(document.getElementById('fStrip'),80);
+  if(!_s2) return;
+  const{c:sCtx,w:sW,h:sH}=_s2;
   const sw=sW/n;
   for(let i=0;i<n;i++){
     // Raw brightness
@@ -979,7 +991,9 @@ function drawBlend(){
   }
 
   // Color strip
-  const{c:ctx,w:cW,h:H}=setup(document.getElementById('blCanvas'),180);
+  const _s1=setup(document.getElementById('blCanvas'),180);
+  if(!_s1) return;
+  const{c:ctx,w:cW,h:H}=_s1;
   const p={l:6,r:6,t:6,b:18},gW=cW-p.l-p.r,gH=H-p.t-p.b,sw=gW/total;
   for(let f=0;f<total;f++){
     const[r,g,b]=hist[f];
@@ -998,7 +1012,9 @@ function drawBlend(){
   blResult.textContent=`rgb(${fr},${fg},${fb})`;
 
   // Channel convergence
-  const{c:chCtx,w:chW,h:chH}=setup(document.getElementById('blChannels'),140);
+  const _s2=setup(document.getElementById('blChannels'),140);
+  if(!_s2) return;
+  const{c:chCtx,w:chW,h:chH}=_s2;
   const cp={l:36,r:12,t:12,b:24},cgW=chW-cp.l-cp.r,cgH=chH-cp.t-cp.b;
   chCtx.strokeStyle='#1a1a1a';chCtx.lineWidth=1;
   for(let i=0;i<=4;i++){const y=cp.t+cgH*i/4;chCtx.beginPath();chCtx.moveTo(cp.l,y);chCtx.lineTo(cp.l+cgW,y);chCtx.stroke();}
@@ -1019,8 +1035,16 @@ function drawBlend(){
 }
 [blTrail,c1,c2,c3].forEach(e=>e.addEventListener('input',drawBlend));
 
-// ══════════════════ INIT (deferred to after layout) ══════════════════
+// ══════════════════ INIT (robust: multiple strategies) ══════════════════
+let inited=false;
 function initAll(){
+  // Check if layout is actually ready
+  const test=document.querySelector('.container');
+  if(test && test.getBoundingClientRect().width<200){
+    // Not ready yet — will retry via ResizeObserver or load event
+    return;
+  }
+  inited=true;
   initHero();
   drawDecay();
   drawWf();
@@ -1030,8 +1054,15 @@ function initAll(){
   drawFlicker();
   drawBlend();
 }
-// First paint — ensure layout is resolved before measuring canvas widths
-requestAnimationFrame(()=>requestAnimationFrame(initAll));
+// Strategy 1: double-rAF (works on most browsers)
+requestAnimationFrame(()=>requestAnimationFrame(()=>{if(!inited)initAll();}));
+// Strategy 2: load event (guaranteed layout)
+window.addEventListener('load',()=>{if(!inited)initAll();});
+// Strategy 3: ResizeObserver (fires when container gets real dimensions)
+if(typeof ResizeObserver!=='undefined'){
+  const ro=new ResizeObserver(()=>{if(!inited)initAll();});
+  ro.observe(document.querySelector('.container'));
+}
 
 window.addEventListener('resize',()=>{
   initHero();initTrail();initCmp();
